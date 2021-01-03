@@ -1,0 +1,63 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+When you write the model file it miss the else condition if the folder exist.
+
+*File 01_data_selection.R*
+```{r}
+
+
+if(!dir.exists(file.path(getwd(),"_DATA/data_initial"))){
+  dir.create(file.path(getwd(),"_DATA/data_initial"))
+  write_rds(macd_ML2, file.path(getwd(),"_DATA/data_initial", "macd_ML5M.rds"))
+} else
+{
+  write_rds(macd_ML2, file.path(getwd(),"_DATA/data_initial", "macd_ML5M.rds"))
+  
+}
+```
+
+
+The path *_DATA/data_initial*, could be changed to *_Data*
+or vice versa in the *02_BuildModel.R*
+```{R}
+
+path_data <- file.path(path_user, "_DATA")
+
+```
+
+
+Upgrade to be able to update the amount of bars used to detect the market type, according a new model created corresponding to the new bar quantity.
+It separate the *macd_ai_classified* file in different files to avoid to mix up data with different column quantity.
+
+*mt_make_model.R*
+```{R}
+ path_file_name <- paste0("macd_ai_classified_", timeframe, "M",num_bars,".rds")
+
+```
+
+*03_Score_Data_5M.R*
+```{R}
+if(exists("df_temp") && !file.exists(file.path(path_data, "macd_ai_classified_5M",num_cols,".rds")))
+  {
+    # write file first time
+    write_rds(df_temp, file.path(path_data, paste0("macd_ai_classified_5M",num_cols,".rds")))
+} else if(exists("df_temp")) {
+    # read previous file
+      read_rds(file.path(path_data,  paste0("macd_ai_classified_5M",num_cols,".rds"))) %>% 
+      # join obtained data
+      bind_rows(df_temp) %>% 
+      # write data back
+      write_rds(file.path(path_data, paste0("macd_ai_classified_5M",num_cols,".rds")))
+      #verify generated data
+      # x1 <- read_rds(file.path(data_update_path, "macd_ai_classified.rds"))
+  }
+
+```
+
+
+
+
+

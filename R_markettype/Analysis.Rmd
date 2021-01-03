@@ -1,0 +1,49 @@
+---
+title: "Analyse Market Type results from Florian"
+output:
+  word_document: default
+  pdf_document: default
+  html_notebook: default
+---
+
+# Data from Florian
+
+```{r}
+DATA <- readr::read_csv("_DATA/Book1.csv")
+```
+
+
+## Make factors
+
+```{r}
+library(dplyr)
+library(magrittr)
+DATA <- DATA %>% 
+  mutate_if(is.character, as.factor)
+```
+
+## Group by Indicator
+
+Which indicator is better?
+
+```{r}
+DATA %>% 
+  group_by(Indicator) %>% 
+  summarise(Aver_Conf = mean(Confidence),
+            NumObs = n()) %>% 
+  arrange(desc(Aver_Conf)) %>% 
+  knitr::kable()
+```
+
+# make a graph?
+
+```{r}
+library(ggplot2)
+DATA %>% 
+  group_by(Indicator) %>% 
+  summarise(Aver_Conf = mean(Confidence),
+            NumObs = n()) %>% 
+  ggplot(aes(x = Indicator, y = Aver_Conf, col = Indicator))+geom_bar(stat = 'identity')+
+  coord_flip()
+```
+

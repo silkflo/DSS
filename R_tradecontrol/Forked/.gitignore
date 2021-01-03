@@ -1,0 +1,44 @@
+# History files
+.Rhistory
+.Rapp.history
+# Session Data files
+.RData
+# Example code in package build process
+*-Ex.R
+# Output files from R CMD build
+/*.tar.gz
+# Output files from R CMD check
+/*.Rcheck/
+# RStudio files
+.Rproj.user/
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+# knitr and R markdown default cache directories
+/*_cache/
+/cache/
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+.Rproj.user
+07_TradeAnalyser_T1_3_v7.2.Rout
+07_PerformanceAnalyser_T1_v1.2.Rout
+*.Rout
+RL.Rmd
+RL.nb.html
+RL-TradeControl.Rmd
+RL-TradeControl.nb.html
+RL_1.nb.html
+RL_1.Rmd
+RL_2.Rmd
+RL_2.nb.html
+TEST4/data_4_RL.R
+TEST4/OptimizationTrigger.bat
+TEST4/OptimizationTrigger.R
+TEST4/TradeTriggerRL.bat
+TEST4/TradeTriggerRLv3.R
+_RL/research_control_parameters.R
+_RL_MT/control/*.rds
+*.rds

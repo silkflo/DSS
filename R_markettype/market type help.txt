@@ -1,0 +1,34 @@
+Market type
+
+1  Model :
+
+
+
+create macd_ML5M.rds via 01_data_selection
+it use close price + MACD
+valid the market type ~ with 64 candles could be good, check a gain  an average of 1 market type in 5M chart
+
+
+run 02_BuildModel.R, change the period if needed, inside Model folder it build the h20 deep learning file!
+
+with datawriter4.02, extrat CP & MACD for 300 candle in the proper period
+
+2 generate AI_MarketType_xxxxx
+run 03_ScoreData.R
+it generate the csv for mql4 to read
+it classified the data in macd_ai_classified.rds
+
+3 - upgrade model
+can use shiny app to update the model
+use macd_ai_classified.RDS to see he data, can save the correct data and save it to a new file
+new data saved in macd_checked
+see last course of vladimir to bind these new data into the model
+might be inside macd_ML5M.rds
+
+
+interval time  running 03_ScoreData.R depend on how long time do we want to check how is the market type
+perform some test about it
+
+Monitor the result of market type , add it in comment
+
+
