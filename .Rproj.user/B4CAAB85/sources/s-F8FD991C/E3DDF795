@@ -1,0 +1,24 @@
+{
+    "id": "E3DDF795",
+    "path": "C:/DSS/Initialization/Generate_ini.R",
+    "project_path": "Initialization/Generate_ini.R",
+    "type": "r_source",
+    "hash": "4072617475",
+    "contents": "",
+    "dirty": false,
+    "created": 1609780437430.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "cursorPosition": "34,1",
+        "scrollLine": "27"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1609780509,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1609780509653,
+    "read_only": false,
+    "read_only_alternatives": []
+}
