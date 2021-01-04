@@ -1,0 +1,24 @@
+{
+    "id": "7FB2B55C",
+    "path": "C:/DSS/Function/make_model_aml.R",
+    "project_path": "Function/make_model_aml.R",
+    "type": "r_source",
+    "hash": "291999403",
+    "contents": "",
+    "dirty": false,
+    "created": 1609776893238.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "cursorPosition": "161,32",
+        "scrollLine": "155"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1609779908,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1609779908332,
+    "read_only": false,
+    "read_only_alternatives": []
+}
