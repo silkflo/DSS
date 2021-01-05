@@ -11,13 +11,12 @@ library(h2o)
 library(lazytrade)
 library(magrittr)
 library(lubridate)
-source("C:/DSS/Function/All_Path.R")
-source("C:/DSS/Function/make_model_aml.R")
 
-timeFrame <- 5
+source("C:/DSS/Function/All_Path.R")
+timeFrame <-5
 
 #path to user repo:
-
+#!!!Change this path!!! 
 path_user <- Path()$selfLearning
 
 #### Read asset prices and indicators ==========================================
@@ -34,7 +33,7 @@ Pairs = c("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCAD", "USDCHF", "USDJPY",
 path_model <- file.path(path_user, "_MODELS")
 
 #path to store logs data (e.g. duration of machine learning steps)
-path_logs <- file.path(Path()$pathLog)
+path_logs <- Path()$pathLog
 
 path_sbxm <- Path()$pathT2
 path_sbxs <- Path()$pathT3
@@ -44,19 +43,18 @@ file.copy(from = file.path(Path()$pathT2, "TickSize_AI_RSIADX.csv"),
           to = file.path(path_data, "TickSize_AI_RSIADX.csv"),
           overwrite = TRUE)
 
-
-
 #record time when the script starts to run
 time_start <- Sys.time()
 
-h2o.init(nthreads = 2)
+
+h2o.init(nthreads=2) 
 
 # Performing Testing => Building -> Testing...
 for (PAIR in Pairs) {
   ## PAIR <- "EURUSD"
-
-# repeat testing and training several times  
-
+  
+  # repeat testing and training several times  
+  
   aml_test_model(symbol = PAIR,
                  num_bars = 600,
                  timeframe = timeFrame,
@@ -65,57 +63,57 @@ for (PAIR in Pairs) {
                  path_sbxm = path_sbxm,
                  path_sbxs = path_sbxs)  
   
-  make_model_aml(symbol = PAIR,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               force_update=FALSE,
-               num_nn_options = 24,
-               min_perf = 100000)
-
-aml_test_model(symbol = PAIR,
-               num_bars = 600,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               path_sbxm = path_sbxm,
-               path_sbxs = path_sbxs)  
-
-aml_make_model(symbol = PAIR,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               force_update=FALSE,
-               num_nn_options = 24,
-               min_perf = 50000)
-
-aml_test_model(symbol = PAIR,
-               num_bars = 600,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               path_sbxm = path_sbxm,
-               path_sbxs = path_sbxs)  
-
-aml_make_model(symbol = PAIR,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               force_update=FALSE,
-               num_nn_options = 24,
-               min_perf = 10000)
-
-aml_test_model(symbol = PAIR,
-               num_bars = 600,
-               timeframe = timeFrame,
-               path_model = path_model,
-               path_data = path_data,
-               path_sbxm = path_sbxm,
-               path_sbxs = path_sbxs)  
-
-}  
+  aml_make_model(symbol = PAIR,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 force_update=FALSE,
+                 num_nn_options = 24,
+                 min_perf = 100000)
   
- @# stop h2o engine
+  aml_test_model(symbol = PAIR,
+                 num_bars = 600,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 path_sbxm = path_sbxm,
+                 path_sbxs = path_sbxs)  
+  
+  aml_make_model(symbol = PAIR,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 force_update=FALSE,
+                 num_nn_options = 24,
+                 min_perf = 50000)
+  
+  aml_test_model(symbol = PAIR,
+                 num_bars = 600,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 path_sbxm = path_sbxm,
+                 path_sbxs = path_sbxs)  
+  
+  aml_make_model(symbol = PAIR,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 force_update=FALSE,
+                 num_nn_options = 24,
+                 min_perf = 10000)
+  
+  aml_test_model(symbol = PAIR,
+                 num_bars = 600,
+                 timeframe = timeFrame,
+                 path_model = path_model,
+                 path_data = path_data,
+                 path_sbxm = path_sbxm,
+                 path_sbxs = path_sbxs)  
+  
+}  
+
+# stop h2o engine
 h2o.shutdown(prompt = F)
 
 #record time when the script ended to run
@@ -126,19 +124,19 @@ time_total <- difftime(time_end,time_start,units="sec")
 as.double(time_total)
 
 # extract number of rows in the datasets
-# x <- read_rds(file.path(path_data, paste0("AI_RSIADXEURUSD",timeFrame,".rds")))
-# n_rows_x <- nrow(x)
+x <- read_rds(file.path(path_data, paste0("AI_RSIADXEURUSD",timeFrame,".rds")))
+n_rows_x <- nrow(x)
 
 #setup a log dataframe
-logs <- data.frame(dtm = Sys.time(), time2run = time_total,file = "03_testBuildTestModel.R")
+logs <- data.frame(dtm = Sys.time(), time2run = time_total, nrows = n_rows_x)
 
 #read existing log (if exists) and add there a new log data
-if(!file.exists(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))){
-  write_rds(logs, file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))
+if(!file.exists(file.path(path_logs, paste0("time_executeM",timeFrame,".rds")))){
+  write_rds(logs, file.path(path_logs, paste0("time_executeM",timeFrame,".rds")))
 } else {
-  read_rds(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds'))) %>% 
+  read_rds(file.path(path_logs, paste0("time_executeM",timeFrame,".rds"))) %>% 
     bind_rows(logs) %>% 
-    write_rds(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))
+    write_rds(file.path(path_logs, paste0("time_executeM",timeFrame,".rds")))
 }
 
 # outcome are the models files for each currency pair written to the folder /_MODELS
@@ -154,7 +152,7 @@ filesToAnalyse1 <-list.files(path = path_model,
 
 # aggregate all files into one
 for (VAR in filesToAnalyse1) {
-  # VAR <- filesToAnalyse1[14]
+  # VAR <- filesToAnalyse1[1]
   if(!exists("dfres1")){dfres1 <- readr::read_csv(VAR)}  else {
     dfres1 <- readr::read_csv(VAR) %>% dplyr::bind_rows(dfres1)
   }
@@ -165,29 +163,28 @@ for (VAR in filesToAnalyse1) {
 df <- dfres1 %>% 
   dplyr::mutate(qrtl = quantile(MaxPerf, 0.25)) %>% 
   head(1) %$% qrtl %>% as_tibble() %>% rename(FrstQntlPerf = value)
-  
+
 
 # write the value of the 1st quantile into all files
-# timeframe <- 60
+timeframe <- 60
 # 
 for (VAR in filesToAnalyse1) {
-  # VAR <- filesToAnalyse1[14]
+  # VAR <- filesToAnalyse1[1]
   readr::read_csv(VAR) %>% dplyr::bind_cols(df) %>% readr::write_csv(VAR)
-  }
+}
 
 # also move these files to sandboxes of the trading terminals
 for (PAIR in Pairs) {
-  #PAIR <- 'CADCHF'
+  #PAIR <- 'EURUSD'
   #timeframe <- 60
-  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
-            to = file.path(path_sbxm, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
+  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
+            to = file.path(path_sbxm, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
             overwrite = TRUE)
   
-  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
-            to = file.path(path_sbxs, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
+  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
+            to = file.path(path_sbxs, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
             overwrite = TRUE)
 }
 
 #set delay to insure h2o unit closes properly
 Sys.sleep(5)
-

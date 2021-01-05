@@ -3,22 +3,22 @@
     "path": "C:/DSS/R_selflearning/_PROD/03_TestBuildTestModel.R",
     "project_path": "R_selflearning/_PROD/03_TestBuildTestModel.R",
     "type": "r_source",
-    "hash": "2197055159",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1609775441083.0,
     "source_on_save": false,
     "relative_order": 2,
     "properties": {
-        "cursorPosition": "13,34",
-        "scrollLine": "0"
+        "cursorPosition": "115,0",
+        "scrollLine": "87"
     },
     "folds": "",
-    "lastKnownWriteTime": 1609779908,
+    "lastKnownWriteTime": 1609820563,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1609779908203,
+    "last_content_update": 1609820563397,
     "read_only": false,
     "read_only_alternatives": []
 }
