@@ -1,0 +1,24 @@
+{
+    "id": "E240DA37",
+    "path": "C:/DSS/R_NewsReading/economicCalendarTrigger.R",
+    "project_path": "R_NewsReading/economicCalendarTrigger.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": true,
+    "created": 1610027962692.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "cursorPosition": "58,2",
+        "scrollLine": "53"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1610027777,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1610028000465,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -2,7 +2,7 @@
 
 Path <- function(){
   
-  calendarPath <- "C:/DSS/R_NewsReading/calendar-event-list.csv"
+  calendarPath <- "C:/DSS/R_NewsReading/ff_calendar_thisweek.csv"
   orderResultsT2 <- "C:/Program Files (x86)/MT4 - Terminal 2/MQL4/files/OrdersResultsT2.csv"
   pathT1 <- "C:/Program Files (x86)/MT4 - Terminal 1/MQL4/Files/"
   pathT2 <- "C:/Program Files (x86)/MT4 - Terminal 2/MQL4/Files/"

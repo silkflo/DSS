@@ -166,7 +166,7 @@ df <- dfres1 %>%
 
 
 # write the value of the 1st quantile into all files
-timeframe <- 60
+#timeframe <- 60
 # 
 for (VAR in filesToAnalyse1) {
   # VAR <- filesToAnalyse1[1]
@@ -177,12 +177,12 @@ for (VAR in filesToAnalyse1) {
 for (PAIR in Pairs) {
   #PAIR <- 'EURUSD'
   #timeframe <- 60
-  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
-            to = file.path(path_sbxm, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
+  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
+            to = file.path(path_sbxm, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
             overwrite = TRUE)
   
-  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
-            to = file.path(path_sbxs, paste0('StrTest-', PAIR,"M",timeframe, ".csv")),
+  file.copy(from = file.path(path_model, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
+            to = file.path(path_sbxs, paste0('StrTest-', PAIR,"M",timeFrame, ".csv")),
             overwrite = TRUE)
 }
 

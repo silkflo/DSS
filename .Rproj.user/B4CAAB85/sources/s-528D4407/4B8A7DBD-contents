@@ -1,0 +1,72 @@
+# ----------------------------------------------------------------------------------------
+# R Script to score the latest asset indicator data against Deep Learning model
+# ----------------------------------------------------------------------------------------
+# (C) 2019, 2020 Vladimir Zhbanko
+# https://www.udemy.com/course/self-learning-trading-robot/?referralCode=B95FC127BA32DA5298F4
+#
+# load libraries to use and custom functions
+library(dplyr)
+library(readr)
+library(lubridate)
+library(h2o)
+library(magrittr)
+library(lazytrade)
+source("C:/DSS/Function/All_Path.R")
+
+timeFrame <-5
+#path to user repo:
+#!!!Change this path!!! 
+path_user <- Path()$selfLearning
+
+#### definition of paths and variables ==========================================
+path_data <- Path()$pathT2
+#absolute path to store model objects (useful when scheduling tasks)
+path_model <- file.path(path_user, "_MODELS")
+
+# load prices of 28 currencies
+path_sbxm <- Path()$pathT2
+path_sbxs <- Path()$pathT3
+path_logs <- file.path(Path()$pathLog)
+
+# Vector of currency pairs
+Pairs = c("EURUSD", "GBPUSD", "AUDUSD", "NZDUSD", "USDCAD", "USDCHF", "USDJPY",
+          "EURGBP", "EURJPY", "EURCHF", "EURNZD", "EURCAD", "EURAUD", "GBPAUD",
+          "GBPCAD", "GBPCHF", "GBPJPY", "GBPNZD", "AUDCAD", "AUDCHF", "AUDJPY",
+          "AUDNZD", "CADJPY", "CHFJPY", "NZDJPY", "NZDCAD", "NZDCHF", "CADCHF")   
+
+time_start <- Sys.time()
+# initialize the virtual machine
+h2o.init(nthreads = 2)
+
+for (PAIR in Pairs) {
+  ## PAIR <- "EURUSD"
+aml_score_data(symbol = PAIR,
+               timeframe = timeFrame,
+               path_model = path_model,
+               path_data = path_data,
+               path_sbxm = path_sbxm,
+               path_sbxs = path_sbxs)
+
+}
+
+# shutdown h2o
+h2o.shutdown(prompt = F)
+
+
+time_end <- Sys.time()
+time_total <- difftime(time_end,time_start,units="sec")
+as.double(time_total)
+logs <- data.frame(dtm = Sys.time(), time2run = time_total,file = "04_ScoreData.R")
+
+#read existing log (if exists) and add there a new log data
+if(!file.exists(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))){
+  write_rds(logs, file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))
+} else {
+  read_rds(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds'))) %>% 
+    bind_rows(logs) %>% 
+    write_rds(file.path(path_logs, paste0('time_executeM',timeFrame,'.rds')))
+}
+
+# outcome is series of files written to the sandboxes of each terminals
+
+

@@ -80,12 +80,6 @@
 #'
 #' }
 #'
-#' library(dplyr)
-#' library(readr)
-#' library(h2o)
-#' library(lazytrade)
-#' library(lubridate)
-#' library(magrittr)
 #' source("C:/DSS/Function/All_Path.R")
 #'
 #'  symbol <- "EURUSD"
@@ -95,7 +89,7 @@
 #'  path_model <- file.path(path_user, "_MODELS")
 #'  force_update <- FALSE
 #'  num_nn_options <- 24
-#'  min_perf <- 0.3
+#'  min_perf <- 10000
 #'  h2o.init(nthreads = 2)
 #'
 make_model_aml <- function(symbol, timeframe, path_model, path_data,
@@ -167,7 +161,7 @@ make_model_aml <- function(symbol, timeframe, path_model, path_data,
 
   for (i in 1:dim(nn_sets)[1]) {
 
-    # i <- 1
+    # i <- 2
     # fit models from simplest to more complex
   ModelC <- h2o::h2o.deeplearning(
     model_id = paste0("DL_Regression", "-", symbol, "-", timeframe),

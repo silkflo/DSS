@@ -8,11 +8,29 @@ library(mailR)
 
 source("C:/DSS/Function/All_Path.R")
 #--------------DATA IMPORT-----------------#
-path_calendar <- "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.csv"
-cal_df <- readr::read_csv(path_calendar)
-cal_df$Start <- paste(cal_df$Date," ",cal_df$Time)
+calendarPath <- Path()$calendarPath
+DFevent <- try(read.csv(calendarPath),silent = TRUE)
 
-# format(cal_df$Start, format = "%m-%d-%Y")
+calendarDate <- format(file.info(calendarPath)$ctime,format="%Y-%m-%d")
+
+
+# if(calendarDate != Sys.Date()){
+#   
+#   sender <- "souss.discord1@gmail.com"
+#   recipients <- c("florian.assous@hotmail.fr")
+#   send.mail(from = sender,
+#             to = recipients,
+#             subject="ALERT economic calendar not downloaded",
+#             body = "The economic calendar haven't download, please check",
+#             smtp = list(host.name = "smtp.gmail.com", port = 465, 
+#                         user.name="souss.discord1@gmail.com", passwd="xxxxxxxx", ssl=TRUE),
+#             authenticate = TRUE,
+#             send = TRUE)
+#   print("an email is sent to florian.assous@hotmail.fr")
+#   
+# }else
+#  {
+
 
 DFT2 <- try(read_csv(Path()$orderResultsT2,
                       col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"),
@@ -23,11 +41,11 @@ DFT2MN <- DFT2 %>% group_by(MagicNumber) %>% select("MagicNumber","Symbol") %>% 
 
 #----------------TABLE EDITION--------------#
 # convert "Start to time format and filter high impact event
-DFeventResult <- data.frame(Start = as.POSIXct( cal_df$Start, format="%m-%d-%Y %H:%M:%S" , tz = "GMT"),
-                            Name = cal_df$Title,
-                            Impact = cal_df$Impact,
-                            Currency = cal_df$Country)  %>%
-                 filter(cal_df$Impact == "High")
+DFeventResult <- data.frame(Start = as.POSIXct( DFevent$Start, format="%m/%d/%Y %H:%M:%S" , tz = "GMT"),
+                            Name = DFevent$Name,
+                            Impact = DFevent$Impact,
+                            Currency = DFevent$Currency)  %>%
+                 filter(DFevent$Impact == "HIGH")
 
 # change timezone to local time
 # tz list : https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -82,4 +100,5 @@ write.csv(DFT3MN, paste0(Path()$pathT3,"01_MacroeconomicEvent.csv"), row.names =
 DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$Symbol,DFT2MN$Flag )
 write.csv(DFT4MN, paste0(Path()$pathT4,"01_MacroeconomicEvent.csv"), row.names = F)
 
+#}
 

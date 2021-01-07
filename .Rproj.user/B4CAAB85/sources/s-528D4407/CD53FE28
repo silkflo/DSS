@@ -1,0 +1,32 @@
+{
+    "id": "CD53FE28",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1610028063568.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "expression": "DFT2MN",
+        "caption": "DFT2MN",
+        "totalObservations": 5,
+        "displayedObservations": 5,
+        "variables": 3,
+        "cacheKey": "BF7629C0",
+        "object": "DFT2MN",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=DFT2MN&cache_key=BF7629C0&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 7310575183467848224,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1610028063568,
+    "read_only": false,
+    "read_only_alternatives": []
+}

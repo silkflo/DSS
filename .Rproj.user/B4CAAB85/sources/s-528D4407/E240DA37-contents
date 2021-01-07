@@ -12,8 +12,6 @@ path_calendar <- "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.csv"
 cal_df <- readr::read_csv(path_calendar)
 cal_df$Start <- paste(cal_df$Date," ",cal_df$Time)
 
-# format(cal_df$Start, format = "%m-%d-%Y")
-
 DFT2 <- try(read_csv(Path()$orderResultsT2,
                       col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"),
                       col_types = "iiccdci"),silent = TRUE)
@@ -58,7 +56,7 @@ for(i in 1:nrow(DFT2MN)){
     }
 }
 
-#Flag = 1 <=> incoming economic event can't trade
+# Flag = 1 <=> incoming economic event can't trade
 # add new column telling us which magic number shouldn't trade
 DFT2MN$Flag = flag
  
