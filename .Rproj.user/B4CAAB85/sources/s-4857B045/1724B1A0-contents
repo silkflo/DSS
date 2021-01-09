@@ -62,7 +62,7 @@ time_start <- Sys.time()
 j <- 0
 for (i in 1:length(vector_systems)) {
   tryCatch({
-   #i<-1
+   #i<-5
     trading_system <- vector_systems[i]
   })
     if(!file.exists(file.path(Path()$pathControlFile,paste0(trading_system,".rds")))){

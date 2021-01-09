@@ -1,0 +1,24 @@
+{
+    "id": "773C4AE4",
+    "path": "C:/DSS/R_tradecontrol/_RL/Adapt_RL_control_script.R",
+    "project_path": "R_tradecontrol/_RL/Adapt_RL_control_script.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": true,
+    "created": 1610120348168.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "cursorPosition": "40,0",
+        "scrollLine": "35"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1610159428,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1610212798763,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -38,6 +38,7 @@ path_control_files = Path()$controlFile
 # -------------------------
 
 DFT2 <- try(import_data(Path()$pathT2, "OrdersResultsT2.csv"), silent = TRUE)
+DFT2 <- filter(DFT2,DFT2$Profit != 0)
 
 # Vector with unique Trading Systems
 vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()

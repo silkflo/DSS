@@ -1,0 +1,32 @@
+{
+    "id": "6F916A44",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1610212402962.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "expression": "DFT2_sum",
+        "caption": "DFT2_sum",
+        "totalObservations": 1,
+        "displayedObservations": 1,
+        "variables": 3,
+        "cacheKey": "F2F9254F",
+        "object": "DFT2_sum",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=DFT2_sum&cache_key=F2F9254F&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 733072385768515104,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1610212402962,
+    "read_only": false,
+    "read_only_alternatives": []
+}
