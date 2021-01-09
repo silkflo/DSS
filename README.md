@@ -1,2 +1,2 @@
 # DSS
- Decision support system for trading
+ Decision support system for trading based on lazy trade : https://github.com/vzhomeexperiments/lazytrade
