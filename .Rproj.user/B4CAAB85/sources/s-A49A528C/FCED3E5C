@@ -1,0 +1,24 @@
+{
+    "id": "FCED3E5C",
+    "path": "C:/DSS/R_selflearning/_PROD/04_ScoreData.R",
+    "project_path": "R_selflearning/_PROD/04_ScoreData.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1610981495030.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "cursorPosition": "56,9",
+        "scrollLine": "46"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1609640408,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1609640408,
+    "read_only": false,
+    "read_only_alternatives": []
+}

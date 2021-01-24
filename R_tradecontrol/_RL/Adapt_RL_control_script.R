@@ -38,6 +38,7 @@ path_control_files = Path()$controlFile
 # -------------------------
 
 DFT2 <- try(import_data(Path()$pathT2, "OrdersResultsT2.csv"), silent = TRUE)
+DFT2 <- filter(DFT2,DFT2$Profit != 0)
 
 # Vector with unique Trading Systems
 vector_systems <- DFT2 %$% MagicNumber %>% unique() %>% sort()
@@ -48,6 +49,9 @@ DFT2_sum <- DFT2 %>%
   summarise(Num_Trades = n(),
             Mean_profit = sum(Profit)) %>% 
   arrange(desc(Num_Trades))
+
+# keep result in csv file for record
+write.csv(DFT2_sum, paste0(Path()$pathLog,"DFT2_sum.csv"), row.names = F)
 
 ### ============== FOR EVERY TRADING SYSTEM ###
 for (i in 1:length(vector_systems)) {

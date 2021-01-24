@@ -1,24 +1,24 @@
 {
-    "id": "1724B1A0",
+    "id": "7E3F4D53",
     "path": "C:/DSS/R_tradecontrol/_RL/TradeTriggerRL.R",
     "project_path": "R_tradecontrol/_RL/TradeTriggerRL.R",
     "type": "r_source",
     "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1610159604275.0,
+    "created": 1610639001105.0,
     "source_on_save": false,
-    "relative_order": 6,
+    "relative_order": 5,
     "properties": {
-        "cursorPosition": "74,0",
-        "scrollLine": "62"
+        "cursorPosition": "224,0",
+        "scrollLine": "0"
     },
     "folds": "",
     "lastKnownWriteTime": 1610160291,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1610160291260,
+    "last_content_update": 1610160291,
     "read_only": false,
     "read_only_alternatives": []
 }

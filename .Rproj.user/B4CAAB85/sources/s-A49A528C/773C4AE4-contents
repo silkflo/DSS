@@ -50,6 +50,9 @@ DFT2_sum <- DFT2 %>%
             Mean_profit = sum(Profit)) %>% 
   arrange(desc(Num_Trades))
 
+# keep result in csv file for record
+write.csv(DFT2_sum, paste0(Path()$pathLog,"DFT2_sum.csv"), row.names = F)
+
 ### ============== FOR EVERY TRADING SYSTEM ###
 for (i in 1:length(vector_systems)) {
   # tryCatch() function will not abort the entire for loop in case of the error in one iteration
