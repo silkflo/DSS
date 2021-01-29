@@ -29,13 +29,13 @@ calendarPath <- paste0(Path()$data,"ff_calendar_thisweek.csv")
 if(file.exists(calendarPath)){
   calendarDate <- as.Date(file.mtime(calendarPath))
   
-    if(calendarDate != Sys.Date())
-    {
-      path_calendar <- "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.csv"
-      destfile <- paste0(Path()$data,"ff_calendar_thisweek.csv")
-      download.file(path_calendar, destfile)
-      print("calendar updated")
-    }
+  if(calendarDate != Sys.Date())
+  {
+    path_calendar <- "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.csv"
+    destfile <- paste0(Path()$data,"ff_calendar_thisweek.csv")
+    download.file(path_calendar, destfile)
+    print("calendar updated")
+  }
 }else{
   path_calendar <- "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.csv"
   destfile <- paste0(Path()$data,"ff_calendar_thisweek.csv")
@@ -49,28 +49,28 @@ cal_df_Result <- data.frame(Start = cal_df$Start,
                             Name = cal_df$Title,
                             Impact = cal_df$Impact,
                             Currency = cal_df$Country) %>%
-                filter( cal_df$Impact == "HIGH")
+  filter( cal_df$Impact == "HIGH")
 
 #---------calendar 2----------
 calendarPath <- Path()$data
 if(!file.exists(paste0(calendarPath,"calendar-event-list.csv"))){
-  print("please download the calendar into the _DATA folder")
+  print("please download the calendar into the _DATA folder : https://www.fxstreet.com/economic-calendar")
 }else{
-DFevent <- try(read.csv(paste0(calendarPath,"calendar-event-list.csv")),silent = TRUE)
-
-DFeventResult <- data.frame(Start = as.POSIXct( DFevent$Start, format="%m/%d/%Y %H:%M:%S" , tz = "GMT"),
-                            Name = DFevent$Name,
-                            Impact = DFevent$Impact,
-                            Currency = DFevent$Currency)  %>%
-                filter(DFevent$Impact == "HIGH")
+  DFevent <- try(read.csv(paste0(calendarPath,"calendar-event-list.csv")),silent = TRUE)
+  
+  DFeventResult <- data.frame(Start = as.POSIXct( DFevent$Start, format="%m/%d/%Y %H:%M:%S" , tz = "GMT"),
+                              Name = DFevent$Name,
+                              Impact = DFevent$Impact,
+                              Currency = DFevent$Currency)  %>%
+    filter(DFevent$Impact == "HIGH")
 }
 #----mix calendar------
 fullCalendarResult <- rbind(cal_df_Result,DFeventResult)
 
 
 DFT2 <- try(read_csv(Path()$orderResultsT2,
-                      col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"),
-                      col_types = "iiccdci"),silent = TRUE)
+                     col_names = c("MagicNumber", "TicketNumber", "OrderStartTime", "OrderCloseTime", "Profit", "Symbol", "OrderType"),
+                     col_types = "iiccdci"),silent = TRUE)
 
 # get Magic Number and symbol
 DFT2MN <- DFT2 %>% group_by(MagicNumber) %>% select("MagicNumber","Symbol") %>% unique()
@@ -92,30 +92,30 @@ flag  <- vector("numeric", nrow(DFT2MN))
 
 # the 1st for loop will check any magic numbers
 for(i in 1:nrow(DFT2MN)){
- # i <-1
-if(nrow(fullCalendarResult>0)){
+  # i <-1
+  if(nrow(fullCalendarResult>0)){
     for(j in 1:nrow(fullCalendarResult)){
       # j<-1
       # 1 can be adjusted according how long before the event you want the signal stop the trading
       if(as.double(difftime(fullCalendarResult$Start[j],Sys.time(), units = "hours")) < 1 &&
-          (substr(DFT2MN$Symbol[i],1,3) == fullCalendarResult$Currency[j] || substr(DFT2MN$Symbol[i],4,6) == fullCalendarResult$Currency[j] )){
+         (substr(DFT2MN$Symbol[i],1,3) == fullCalendarResult$Currency[j] || substr(DFT2MN$Symbol[i],4,6) == fullCalendarResult$Currency[j] )){
         flag[i] <- 1 
         break
       } else{
         flag[i] <- 0
       }
     }
-} else
-{
-  flag[i] <- 0
-}
-
+  } else
+  {
+    flag[i] <- 0
+  }
+  
 }
 
 # Flag = 1 <=> incoming economic event can't trade
 # add new column telling us which magic number shouldn't trade
 DFT2MN$Flag = flag
- 
+
 # filter the table with magic number not allow to trade only
 #DFT2MN <-as.data.frame(DFT2MN) %>% filter(DFT2MN$Flag == 1)
 
@@ -144,69 +144,67 @@ write.csv(DFT4MN, paste0(Path()$pathT4,"01_MacroeconomicEvent.csv"), row.names =
 
 #  DF_NT <- (read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici"))
 DFT2MN  <- as.data.frame(DFT2MN) %>% filter(DFT2MN$Flag == 1)
+
+# disable trades
+
+if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
   
-  # disable trades
-  
-  if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
-    
-    DFT2MN <- DFT2MN %>%
-      group_by(MagicNumber) %>%
-      select(MagicNumber) %>% 
-      mutate(IsEnabled = 0)
-      # write commands to disable systems
-    DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
-      writeCommandViaCSV(DFT1MN,path_T1)
-      writeCommandViaCSV(DFT2MN,path_T2)
-   DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
-      writeCommandViaCSV(DFT3MN,path_T3)
-   DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
-      writeCommandViaCSV(DFT4MN,path_T4)
-   DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
-      writeCommandViaCSV(DFT5MN,path_T5)
-   }
-  
+  DFT2MN <- DFT2MN %>%
+    group_by(MagicNumber) %>%
+    select(MagicNumber) %>% 
+    mutate(IsEnabled = 0)
+  # write commands to disable systems
+  DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT1MN,path_T1)
+  writeCommandViaCSV(DFT2MN,path_T2)
+  DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT3MN,path_T3)
+  DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT4MN,path_T4)
+  DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT5MN,path_T5)
+}
+
 DFT2MN <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
 DFT2MN  <- as.data.frame(DFT2MN) %>% filter(DFT2MN$Flag == 0)
-  
-  MN <- DFT2MN %>%
-    group_by(MagicNumber) %>%
-    select("MagicNumber") %>% unique()
-  
-  if(useRL == TRUE){
-      # delete rows from DF_NT if systemcontrol don't allow trade
-      for(i in nrow(MN))
-      {
-        # i <-1
-        magicNumber <- toString(MN[i,])
-        
-        SC <- read_csv(file= file.path(path_T3, paste0("SystemControl",magicNumber,".csv")),col_names =  TRUE, col_types = "ii") 
-        SC <- as.data.frame(SC)
-        
-        if(SC$IsEnabled == 0){
-          DFT2MN <- as.data.frame(DFT2MN) %>%
-            filter(DFT2MN$MagicNumber != magicNumber)
-        }
-      }
-  }
-  
-  # enable trades
-  
-  # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-  if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
-    DFT2MN <- DFT2MN %>%
-      group_by(MagicNumber) %>% 
-      select(MagicNumber) %>% 
-      mutate(IsEnabled = 1)  
-      # write commands to disable systems
-  DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
-    writeCommandViaCSV(DFT1MN,path_T1)
-    writeCommandViaCSV(DFT2MN,path_T2)
-  DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
-    writeCommandViaCSV(DFT3MN,path_T3)
-  DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
-    writeCommandViaCSV(DFT4MN,path_T4)
-  DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
-    writeCommandViaCSV(DFT5MN,path_T5)
-    }
-  
 
+MN <- DFT2MN %>%
+  group_by(MagicNumber) %>%
+  select("MagicNumber") %>% unique()
+
+if(useRL == TRUE){
+  # delete rows from DF_NT if systemcontrol don't allow trade
+  for(i in nrow(MN))
+  {
+    # i <-1
+    magicNumber <- toString(MN[i,])
+    
+    SC <- read_csv(file= file.path(path_T3, paste0("SystemControl",magicNumber,".csv")),col_names =  TRUE, col_types = "ii") 
+    SC <- as.data.frame(SC)
+    
+    if(SC$IsEnabled == 0){
+      DFT2MN <- as.data.frame(DFT2MN) %>%
+        filter(DFT2MN$MagicNumber != magicNumber)
+    }
+  }
+}
+
+# enable trades
+
+# in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
+if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
+  DFT2MN <- DFT2MN %>%
+    group_by(MagicNumber) %>% 
+    select(MagicNumber) %>% 
+    mutate(IsEnabled = 1)  
+  # write commands to disable systems
+  DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT1MN,path_T1)
+  writeCommandViaCSV(DFT2MN,path_T2)
+  DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT3MN,path_T3)
+  DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT4MN,path_T4)
+  DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+  writeCommandViaCSV(DFT5MN,path_T5)
+}

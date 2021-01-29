@@ -173,38 +173,39 @@ if(file.exists(file.path(path_T2, "01_MacroeconomicEvent.csv"))){
       writeCommandViaCSV(path_T3)
     }
   
-  DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
-  DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 0)
-  
-  MN <- DFT3 %>%
-        group_by(MagicNumber) %>%
-        select("MagicNumber") %>% unique()
-  
-  # delete rows from DF_NT if systemcontrol don't allow trade
-  for(i in nrow(MN))
-  {
-    # i <-1
-    magicNumber <- toString(MN[i,])
-    
-    SC <- read_csv(file= file.path(path_T3, paste0("SystemControl",magicNumber,".csv")),col_names =  TRUE, col_types = "ii") 
-    SC <- as.data.frame(SC)
-    
-    if(SC$IsEnabled == 0){
-      DF_NT <- as.data.frame(DF_NT) %>%
-              filter(DF_NT$MagicNumber != magicNumber)
-    }
-  }
-  
-  
-  # enable trades
-
-  # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
-  if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
-    DF_NT %>%
-      group_by(MagicNumber) %>% 
-      select(MagicNumber) %>% 
-      mutate(IsEnabled = 1) %>% 
-      # write commands to disable systems
-      writeCommandViaCSV(path_T3)}
-  
-}
+#   DF_NT <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
+#   DF_NT  <- as.data.frame(DF_NT) %>% filter(DF_NT$Flag == 0)
+#   
+#   MN <- DFT3 %>%
+#         group_by(MagicNumber) %>%
+#         select("MagicNumber") %>% unique()
+#   
+#   # delete rows from DF_NT if systemcontrol don't allow trade
+#   for(i in nrow(MN))
+#   {
+#     # i <-1
+#     magicNumber <- toString(MN[i,])
+#     
+#     SC <- read_csv(file= file.path(path_T3, paste0("SystemControl",magicNumber,".csv")),col_names =  TRUE, col_types = "ii") 
+#     SC <- as.data.frame(SC)
+#     
+#     if(SC$IsEnabled == 0){
+#       DF_NT <- as.data.frame(DF_NT) %>%
+#               filter(DF_NT$MagicNumber != magicNumber)
+#     }
+#   }
+#   
+#   
+#   # enable trades
+# 
+#   # in this algorithm SystemControl file must be enabled in case there are no MacroEconomic Event
+#   if(!class(DFT3)[1]=='try-error' && !class(DF_NT)[1]=='try-error'){
+#     DF_NT %>%
+#       group_by(MagicNumber) %>% 
+#       select(MagicNumber) %>% 
+#       mutate(IsEnabled = 1) %>% 
+#       # write commands to disable systems
+#       writeCommandViaCSV(path_T3)}
+#   
+# }
+# 

@@ -23,6 +23,7 @@ writeCommandViaCSV <- function(x, pathToTerminal, fileName = "SystemControl"){
       # write the file for MQL4 usage
       write.csv(x[i, ], file = paste0(pathToTerminal, fileName, as.character(x[i, 1]), ".csv"),
                 row.names = FALSE)
+      
     }
   } 
 }

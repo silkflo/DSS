@@ -18,19 +18,20 @@
 #'  library(lubridate) 
 #'  library(ReinforcementLearning) 
 #'  library(magrittr)
-#'  path_T2 <- "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/"
-#'  source("E:/trading/Git/R_tradecontrol/import_data.R") 
+#'  source("C:/DSS/Function/All_Path.R")
+#'  path_T2 <- Path()$pathT2
+#'  source("C:/DSS/Function/import_data.R") 
 #'  DFT2 <- try(import_data(path_T2, "OrdersResultsT2.csv"), silent = TRUE)
-#'  trading_systemDF <- DFT2 %>% filter(MagicNumber == 1201209)
-#'  source("E:/trading/Git/R_tradecontrol/_RL2/generate_RL_policy.R")
+#'  trading_systemDF <- DFT2 %>% filter(MagicNumber == 1202226) %>% filter(Profit != 0)
+#'  source("C:/DSS/Function/generate_RL_policy.R")
 #'  states <- c("tradewin", "tradeloss")
 #'   actions <- c("ON", "OFF")
 #'  control <- list(alpha = 0.3, gamma = 0.6, epsilon = 0.1)
 #'  policy_tr_systDF <- generate_RL_policy(trading_systemDF, states = states,actions = actions, control = control)
-#'  trading_system <- 1201209
+#'  trading_system <- 1202226
 #'  x <- policy_tr_systDF
 #'  last_result <- "tradeloss"
-#'  path_sandbox <- "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/"
+#'  path_sandbox <- Path()$pathT3
 #' 
 #' 
 record_policy <- function(x, last_result, trading_system, path_sandbox){
