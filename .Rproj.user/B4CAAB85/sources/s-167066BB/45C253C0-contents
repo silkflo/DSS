@@ -154,11 +154,15 @@ DFT2MN  <- as.data.frame(DFT2MN) %>% filter(DFT2MN$Flag == 1)
       select(MagicNumber) %>% 
       mutate(IsEnabled = 0)
       # write commands to disable systems
-      writeCommandViaCSV(DFT2MN,path_T1)
+    DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+      writeCommandViaCSV(DFT1MN,path_T1)
       writeCommandViaCSV(DFT2MN,path_T2)
-      writeCommandViaCSV(DFT2MN,path_T3)
-      writeCommandViaCSV(DFT2MN,path_T4)
-      writeCommandViaCSV(DFT2MN,path_T5)
+   DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+      writeCommandViaCSV(DFT3MN,path_T3)
+   DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+      writeCommandViaCSV(DFT4MN,path_T4)
+   DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+      writeCommandViaCSV(DFT5MN,path_T5)
    }
   
 DFT2MN <- read_csv(file= file.path(path_T2, "01_MacroeconomicEvent.csv"), col_types = "ici") 
@@ -194,11 +198,15 @@ DFT2MN  <- as.data.frame(DFT2MN) %>% filter(DFT2MN$Flag == 0)
       select(MagicNumber) %>% 
       mutate(IsEnabled = 1)  
       # write commands to disable systems
-    writeCommandViaCSV(DFT2MN,path_T1)
+  DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+    writeCommandViaCSV(DFT1MN,path_T1)
     writeCommandViaCSV(DFT2MN,path_T2)
-    writeCommandViaCSV(DFT2MN,path_T3)
-    writeCommandViaCSV(DFT2MN,path_T4)
-    writeCommandViaCSV(DFT2MN,path_T5)
+  DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+    writeCommandViaCSV(DFT3MN,path_T3)
+  DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+    writeCommandViaCSV(DFT4MN,path_T4)
+  DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+    writeCommandViaCSV(DFT5MN,path_T5)
     }
   
 
