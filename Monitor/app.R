@@ -25,12 +25,15 @@ ui <- fluidPage(
                                   column(width = 12,fluidRow(
                                     column(6,dateInput(inputId = "From", label = "From", value = Sys.Date()-30)),
                                     column(6,dateInput(inputId = "To", label = "To", value = Sys.Date())))),
-                                 radioButtons(inputId = "Time",label = "Select the type of time", choices = c("Entry Time" , "Exit Time"),selected = "Exit Time")
+                                  column(width = 12,fluidRow(
+                                    column(6,radioButtons(inputId = "Time",label = "Select the type of time", choices = c("Entry Time" , "Exit Time"),selected = "Exit Time")),
+                                    column(6,selectInput(inputId = "Sort", label = "Sort data by", choices = c("MagicNumber","Ticket","EntryTime", "ExitTime","Profit")))))
                      )),
                      mainPanel(
                          tabsetPanel(type = "pills",
                                      tabPanel("Console",verbatimTextOutput("print")),
-                                     tabPanel("Data",tableOutput("data")))
+                                     tabPanel("Data",tableOutput("data")),
+                                     tabPanel("graph",plotOutput("profitGraph")))
                       )
                  ))
       
@@ -46,7 +49,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
 
   
-  
+ #-----------LOAD DATA-------------- 
     file_path <- reactive({
         Terminals <- data.frame(id = 1:4, TermPath = c("C:/Program Files (x86)/AM MT4 - Terminal 1/MQL4/Files/",
                                                        "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/",
@@ -58,11 +61,10 @@ server <- function(input, output, session) {
       # file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
     })
     
-
-    
-  DF_Stats <- reactive({ 
+ DF_Stats <- reactive({ 
      DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
-    DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
+    #    DF_Stats <- read.csv(file_path, col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
+         DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
                           Ticket = DF_Stats$Ticket,
                           EntryTime = as.character(as.POSIXct(DF_Stats$EntryTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
                           ExitTime = as.character(as.POSIXct(DF_Stats$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
@@ -78,55 +80,94 @@ server <- function(input, output, session) {
     symbol <- reactive({
         unique(DF_Stats()$Symbol)
     })
-    output$print <- renderPrint({
-         str(DF_Stats())
-    })
+  
+
     
-    output$data <- renderTable({
-        if(input$MagicNum == "All"){
-        
-        DF_Stats()%>%filter(EntryTime >= input$From, ExitTime <= input$To)
-      }
-     else{
-        if(input$Time == "Entry Time"){
-          DF_Stats()%>%filter(MagicNumber == input$MagicNum, EntryTime >= input$From, EntryTime <= input$To)
-        }else{
-          DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
-        }
-     }
-     
-    })
     
+#-----------MANAGE SIDEBAR-------------    
+    #Refresh data 
     observeEvent(input$Refresh,{
         updateSelectInput(session, inputId = "MagicNum", label = NULL, choices = c("All",magicNumber()), selected = NULL)
-      updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
+        updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
     })
-    
+    #update Symbol choices
     observeEvent(input$MagicNum,{
-      DF_Stats <- read.csv(file_path(), header = FALSE, sep = ",", col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
-      
-       if(input$MagicNum == "All"){
+      if(input$MagicNum == "All"){
           updateSelectInput(session, "Symbol",label = "Select the symbol",choices = c("All",symbol()),selected = "All")
       }else{
-        pair <- DF_Stats%>%group_by(Symbol)%>%filter(MagicNumber == input$MagicNum)%>%select(Symbol)%>%unique()
+        pair <- DF_Stats()%>%group_by(Symbol)%>%filter(MagicNumber == input$MagicNum)%>%select(Symbol)%>%unique()
         updateSelectInput(session, "Symbol",label = "Select the symbol",choices = as.character(pair),selected = pair)
       }
     })
-   
+   #update Magic Number
     observeEvent(input$Symbol,{
-      x <- input$Symbol
-      DF_Stats <- read.csv(file_path(), header = FALSE, sep = ",", col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
-      
       if(input$Symbol == "All" || input$Symbol == 1)
       {
             updateSelectInput(session, "MagicNum",label = "Select Magic Number",choices = c("All",magicNumber()),selected = "All")
       }else
       {
-            MN <- DF_Stats%>%group_by(MagicNumber)%>%filter(Symbol==input$Symbol)%>%select(MagicNumber)%>%unique()
+            MN <- DF_Stats()%>%group_by(MagicNumber)%>%filter(Symbol==input$Symbol)%>%select(MagicNumber)%>%unique()
             updateSelectInput(session, "MagicNum",label = "Select Magic Number",choices =  c(as.integer(unlist(MN))) ,selected = as.integer(unlist(MN)[1]))
       }
     })
+    
+    #---------DATA TAB---------------  
+    Stats <- reactive({
+      if(input$MagicNum == "All"){
+        DF_Stats <- DF_Stats()%>%filter(EntryTime >= input$From, ExitTime <= input$To)
+      }
+      else{
+        if(input$Time == "Entry Time"){
+          DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, EntryTime >= input$From, EntryTime <= input$To)
+        }else{
+          DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
+        }
+      }
+      
+      switch(input$Sort,
+             "MagicNumber" =  DF_Stats[order(DF_Stats$MagicNumber,decreasing = T),],
+             "Ticket" =  DF_Stats[order(DF_Stats$Ticket,decreasing = T),],
+             "EntryTime" =  DF_Stats[order(DF_Stats$EntryTime,decreasing = T),],
+             "ExitTime" =  DF_Stats[order(DF_Stats$ExitTime,decreasing = T),],
+             "Profit"=  DF_Stats[order(DF_Stats$Profit,decreasing = T),])
+    })
+    
+    
+    output$data <- renderTable({
+        Stats()
+    })
    
+#----------GRAPH TAB-----------------
+    output$profitGraph <- renderPlot({
+    if(input$MagicNum == "All"){
+      DF_Stats <- DF_Stats()%>%filter(EntryTime >= input$From, ExitTime <= input$To)
+    }
+    else{
+   
+        DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
+    }
+  ##  ggplot(DF_Stats, aes(x=ExitTime, y=Profit, group = 1)) + geom_line() for graph line use group = 1
+         ggplot(DF_Stats, aes(x=ExitTime, y=Profit)) +
+        geom_bar(stat = "identity" )
+    
+      
+   #  xValue <- 1:10
+   #  yValue <- cumsum(rnorm(10))
+   #  data <- data.frame(xValue,yValue)
+   #  
+   #  # Plot
+   #  ggplot(data, aes(x=xValue, y=yValue)) +
+   #    geom_line()
+  
+        })
+    
+    
+     
+    
+#---------------END CODE------------------------------------------
+    output$print <- renderPrint({
+      str(input$Sort)
+    })
 }
 
 # Run the application 
