@@ -36,7 +36,10 @@ ui <- fluidPage(
                                               tabsetPanel(
                                                 tabPanel("Data",tableOutput("data")),
                                                 tabPanel("Balance",tableOutput("balance")))),
-                                     tabPanel("graph",plotOutput("profitGraph")))
+                                     tabPanel("graph",
+                                              tabsetPanel(
+                                                tabPanel("Profit",plotOutput("profitGraph")),
+                                                tabPanel("Balance", plotOutput("balanceGraph")))))
                       )
                  ))
       
@@ -130,17 +133,16 @@ server <- function(input, output, session) {
    output$data <- renderTable({
       Stats()
       switch(input$Sort,
-           "MagicNumber" =  DF_Stats()[order(DF_Stats()$MagicNumber,decreasing = T),],
-           "Ticket" =  DF_Stats()[order(DF_Stats()$Ticket,decreasing = T),],
-           "EntryTime" =  DF_Stats()[order(DF_Stats()$EntryTime,decreasing = T),],
-           "ExitTime" =  DF_Stats()[order(DF_Stats()$ExitTime,decreasing = T),],
-           "Profit"=  DF_Stats()[order(DF_Stats()$Profit,decreasing = T),])
+           "MagicNumber" =  Stats()[order(Stats()$MagicNumber,decreasing = T),],
+           "Ticket" =  Stats()[order(Stats()$Ticket,decreasing = T),],
+           "EntryTime" =  Stats()[order(Stats()$EntryTime,decreasing = T),],
+           "ExitTime" =  Stats()[order(Stats()$ExitTime,decreasing = T),],
+           "Profit"=  Stats()[order(Stats()$Profit,decreasing = T),])
    })
     
     
     DF_Balance <- reactive({
-     
-      Balance = c()
+      Balance <- c()
      
       for(i in  1:nrow(Stats())){
         if (i==1){
@@ -149,17 +151,10 @@ server <- function(input, output, session) {
         else{
            Balance[i] <- Stats()$Profit[i]+ Balance[i-1]
         }
-        
       }
 
-     
       DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type))
       cbind(DF_Balance,Balance)
-      
-     # DF_balance <-  data.frame( ExitTime = as.character(as.POSIXct(DF_Stats()$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
-     #                            Symbol = DF_balance$Symbol,
-     #                            Profit = DF_balance$Profit,
-     #                            Balance = 0)
     })
     
     
@@ -168,28 +163,28 @@ server <- function(input, output, session) {
     })
    
 #----------GRAPH TAB-----------------
-    output$profitGraph <- renderPlot({
-    if(input$MagicNum == "All"){
-      DF_Stats <- DF_Stats()%>%filter(EntryTime >= input$From, ExitTime <= input$To)
-    }
-    else{
-   
-        DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
-    }
+  output$profitGraph <- renderPlot({
+
   ##  ggplot(DF_Stats, aes(x=ExitTime, y=Profit, group = 1)) + geom_line() for graph line use group = 1
-        graph1 <- ggplot(DF_Stats, aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
-        graph1 + theme(axis.text.x = element_text(angle =  45)) 
-       
-   
-  
-        })
+        graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
+        graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
+  })
     
+  
+  output$balanceGraph <- renderPlot({
+  
+    graph <- ggplot(DF_Balance(), aes(x = ExitTime)) + 
+             geom_line(aes(y = Balance), group = 1) +
+             geom_line(aes(y = 0), group = 1,color = "red", size = 1)
+    graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," BALANCE"))
+     
+  })  
     
      
     
 #---------------END CODE------------------------------------------
     output$print <- renderPrint({
-      str(input$Sort)
+      str(Stats()$ExitTime)
     })
 }
 
