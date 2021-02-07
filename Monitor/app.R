@@ -32,7 +32,10 @@ ui <- fluidPage(
                      mainPanel(
                          tabsetPanel(type = "pills",
                                      tabPanel("Console",verbatimTextOutput("print")),
-                                     tabPanel("Data",tableOutput("data")),
+                                     tabPanel("Data",
+                                              tabsetPanel(
+                                                tabPanel("Data",tableOutput("data")),
+                                                tabPanel("Balance",tableOutput("balance")))),
                                      tabPanel("graph",plotOutput("profitGraph")))
                       )
                  ))
@@ -49,7 +52,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
 
   
- #-----------LOAD DATA-------------- 
+ #-----------DATA MANAGEMENT-------------- 
     file_path <- reactive({
         Terminals <- data.frame(id = 1:4, TermPath = c("C:/Program Files (x86)/AM MT4 - Terminal 1/MQL4/Files/",
                                                        "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/",
@@ -61,28 +64,27 @@ server <- function(input, output, session) {
       # file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
     })
     
- DF_Stats <- reactive({ 
-     DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
-    #    DF_Stats <- read.csv(file_path, col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
-         DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
-                          Ticket = DF_Stats$Ticket,
-                          EntryTime = as.character(as.POSIXct(DF_Stats$EntryTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
-                          ExitTime = as.character(as.POSIXct(DF_Stats$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
-                          Profit = DF_Stats$Profit,
-                          Symbol = DF_Stats$Symbol,
-                          Type = DF_Stats$Type)
- })
-    
+    DF_Stats <- reactive({ 
+       DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
+   
+              DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
+                            Ticket = DF_Stats$Ticket,
+                            EntryTime = as.character(as.POSIXct(DF_Stats$EntryTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
+                            ExitTime = as.character(as.POSIXct(DF_Stats$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
+                            Profit = DF_Stats$Profit,
+                            Symbol = DF_Stats$Symbol,
+                            Type = DF_Stats$Type)
+    })
+      
     magicNumber <- reactive({
-       unique(DF_Stats()$MagicNumber)
+      unique(DF_Stats()$MagicNumber)
     })
     
     symbol <- reactive({
-        unique(DF_Stats()$Symbol)
+       unique(DF_Stats()$Symbol)
     })
-  
 
-    
+
     
 #-----------MANAGE SIDEBAR-------------    
     #Refresh data 
@@ -123,18 +125,46 @@ server <- function(input, output, session) {
           DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
         }
       }
-      
+    })
+    
+   output$data <- renderTable({
+      Stats()
       switch(input$Sort,
-             "MagicNumber" =  DF_Stats[order(DF_Stats$MagicNumber,decreasing = T),],
-             "Ticket" =  DF_Stats[order(DF_Stats$Ticket,decreasing = T),],
-             "EntryTime" =  DF_Stats[order(DF_Stats$EntryTime,decreasing = T),],
-             "ExitTime" =  DF_Stats[order(DF_Stats$ExitTime,decreasing = T),],
-             "Profit"=  DF_Stats[order(DF_Stats$Profit,decreasing = T),])
+           "MagicNumber" =  DF_Stats()[order(DF_Stats()$MagicNumber,decreasing = T),],
+           "Ticket" =  DF_Stats()[order(DF_Stats()$Ticket,decreasing = T),],
+           "EntryTime" =  DF_Stats()[order(DF_Stats()$EntryTime,decreasing = T),],
+           "ExitTime" =  DF_Stats()[order(DF_Stats()$ExitTime,decreasing = T),],
+           "Profit"=  DF_Stats()[order(DF_Stats()$Profit,decreasing = T),])
+   })
+    
+    
+    DF_Balance <- reactive({
+     
+      Balance = c()
+     
+      for(i in  1:nrow(Stats())){
+        if (i==1){
+          Balance[i] <- Stats()$Profit[i]
+        }
+        else{
+           Balance[i] <- Stats()$Profit[i]+ Balance[i-1]
+        }
+        
+      }
+
+     
+      DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type))
+      cbind(DF_Balance,Balance)
+      
+     # DF_balance <-  data.frame( ExitTime = as.character(as.POSIXct(DF_Stats()$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
+     #                            Symbol = DF_balance$Symbol,
+     #                            Profit = DF_balance$Profit,
+     #                            Balance = 0)
     })
     
     
-    output$data <- renderTable({
-        Stats()
+    output$balance <- renderTable({
+      DF_Balance()
     })
    
 #----------GRAPH TAB-----------------
@@ -147,17 +177,10 @@ server <- function(input, output, session) {
         DF_Stats <- DF_Stats()%>%filter(MagicNumber == input$MagicNum, ExitTime >= input$From, ExitTime <= input$To)
     }
   ##  ggplot(DF_Stats, aes(x=ExitTime, y=Profit, group = 1)) + geom_line() for graph line use group = 1
-         ggplot(DF_Stats, aes(x=ExitTime, y=Profit)) +
-        geom_bar(stat = "identity" )
-    
-      
-   #  xValue <- 1:10
-   #  yValue <- cumsum(rnorm(10))
-   #  data <- data.frame(xValue,yValue)
-   #  
-   #  # Plot
-   #  ggplot(data, aes(x=xValue, y=yValue)) +
-   #    geom_line()
+        graph1 <- ggplot(DF_Stats, aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
+        graph1 + theme(axis.text.x = element_text(angle =  45)) 
+       
+   
   
         })
     
