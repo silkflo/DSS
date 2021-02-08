@@ -12,7 +12,7 @@ library(DT)
 # Define UI for application that draws a histogram
 ui <- fluidPage(
     navbarPage("EA MANAGEMENT",
-        tabPanel("DATA",
+        tabPanel("RESULT",
                  sidebarLayout(
                      sidebarPanel(fluidRow(
                                             selectInput(inputId = "Terminal", label = "Select the terminal Number",choices = 1:5),
@@ -31,22 +31,34 @@ ui <- fluidPage(
                      )),
                      mainPanel(
                          tabsetPanel(type = "pills",
-                                     tabPanel("Console",verbatimTextOutput("print")),
+                                     tabPanel("Console",verbatimTextOutput("console")),
                                      tabPanel("Data",
                                               tabsetPanel(
                                                 tabPanel("Data",tableOutput("data")),
                                                 tabPanel("Balance",tableOutput("balance")))),
-                                     tabPanel("graph",
+                                     tabPanel("Graph",
                                               tabsetPanel(
                                                 tabPanel("Profit",plotOutput("profitGraph")),
-                                                tabPanel("Balance", plotOutput("balanceGraph")))))
-                      )
-                 ))
-      
-
-    )
-)
-
+                                                tabPanel("Balance", plotOutput("balanceGraph")))),
+                                     tabPanel( 
+                                       "Report",br(),
+                                                       column(width = 12,fluidRow(
+                                         column(3,strong("Total Trades :", style = "text-decoration: underline;")),
+                                         column(3,textOutput("totalTrade")))),
+                                                      column(width = 12,fluidRow(
+                                          column(3,strong("Final Balance :", style = "text-decoration: underline;")),
+                                          column(3,textOutput("finalBalance")))),
+                                                      column(width = 12, fluidRow(
+                                          column(3,strong("Profit Factor :", style = "text-decoration: underline;")),
+                                          column(3,textOutput("profitFactor")))),
+                                       column(width = 12, fluidRow(
+                                         column(3,strong("Maximum Profit :", style = "text-decoration: underline;")),
+                                         column(3,textOutput("maxProfit")))),
+                                       column(width = 12, fluidRow(
+                                         column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
+                                         column(3,textOutput("minProfit"))))
+                                                      )))))))
+                
 # Define server logic required to draw a histogram
 
 
@@ -95,6 +107,11 @@ server <- function(input, output, session) {
         updateSelectInput(session, inputId = "MagicNum", label = NULL, choices = c("All",magicNumber()), selected = NULL)
         updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
     })
+    observeEvent(input$Terminal,{
+      updateSelectInput(session, inputId = "MagicNum", label = NULL, choices = c("All",magicNumber()), selected = NULL)
+      updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
+    }) 
+    
     #update Symbol choices
     observeEvent(input$MagicNum,{
       if(input$MagicNum == "All"){
@@ -142,49 +159,86 @@ server <- function(input, output, session) {
     
     
     DF_Balance <- reactive({
-      Balance <- c()
+      balance <- c()
      
       for(i in  1:nrow(Stats())){
         if (i==1){
-          Balance[i] <- Stats()$Profit[i]
+          balance[i] <- Stats()$Profit[i]
         }
         else{
-           Balance[i] <- Stats()$Profit[i]+ Balance[i-1]
+          balance[i] <- Stats()$Profit[i]+ balance[i-1]
         }
       }
 
       DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type))
-      cbind(DF_Balance,Balance)
+      cbind(DF_Balance,balance)
     })
     
     
     output$balance <- renderTable({
-      DF_Balance()
+      if(nrow(Stats())>0){DF_Balance()}
+      else{"NO DATA"}
     })
    
 #----------GRAPH TAB-----------------
   output$profitGraph <- renderPlot({
-
-  ##  ggplot(DF_Stats, aes(x=ExitTime, y=Profit, group = 1)) + geom_line() for graph line use group = 1
+    if(nrow(Stats())>0){
         graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
         graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
+    }
   })
     
   
   output$balanceGraph <- renderPlot({
   
+    if(nrow(Stats())>0){
     graph <- ggplot(DF_Balance(), aes(x = ExitTime)) + 
              geom_line(aes(y = Balance), group = 1) +
              geom_line(aes(y = 0), group = 1,color = "red", size = 1)
     graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," BALANCE"))
-     
+    }
   })  
+  
+  
+  
+  #-------REPORT TAB-----------------
     
-     
+
+  output$finalBalance <- renderText({
+    if(nrow(Stats()>0)){round(DF_Balance()[nrow(DF_Balance()),4],2)}
+    else{"NO DATA"}
+  })
+ 
+  output$profitFactor <- renderText({
+      if(nrow(Stats()>0)){
+         negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%sum()
+         posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%sum()
+         round(abs(posProfit/negProfit),2)
+      }else{
+        "NO DATA"
+      }
+  })
+    
+  output$maxProfit <- renderText({
+    if(nrow(Stats())>0){max(Stats()$Profit)}
+    else{"NO DATA"}
+  })
+  
+  output$minProfit <- renderText({
+      if(nrow(Stats())>0){min(Stats()$Profit)}
+      else{"NO DATA"}
+  })
+  
+  output$totalTrade <- renderText({
+    nrow(Stats())
+  })
+ 
+  #max consecutive win/loss
+  
     
 #---------------END CODE------------------------------------------
-    output$print <- renderPrint({
-      str(Stats()$ExitTime)
+    output$console <- renderPrint({
+        nrow(Stats())
     })
 }
 
