@@ -58,11 +58,10 @@ ui <- fluidPage(
                                          column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
                                          column(3,textOutput("minProfit"))))
                                                       )))))))
-                
-# Define server logic required to draw a histogram
 
-
-
+########################################### END OF UI #################################################
+#######################################################################################################
+########################################## START SERVER ###############################################
 
 server <- function(input, output, session) {
 
@@ -159,19 +158,19 @@ server <- function(input, output, session) {
     
     
     DF_Balance <- reactive({
-      balance <- c()
+      Balance <- c()
      
       for(i in  1:nrow(Stats())){
         if (i==1){
-          balance[i] <- Stats()$Profit[i]
+          Balance[i] <- Stats()$Profit[i]
         }
         else{
-          balance[i] <- Stats()$Profit[i]+ balance[i-1]
+          Balance[i] <- Stats()$Profit[i]+ Balance[i-1]
         }
       }
 
       DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type))
-      cbind(DF_Balance,balance)
+      cbind(DF_Balance,Balance)
     })
     
     
