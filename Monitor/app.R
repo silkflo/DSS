@@ -8,7 +8,8 @@ library(lubridate)
 library(dplyr)
 library(ggplot2)
 library(DT)
-source("C:/DSS/Function/All_Path.R")
+#library(hrbrthemes)
+#source("C:/DSS/Function/All_Path.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -85,8 +86,8 @@ server <- function(input, output, session) {
    
               DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
                             Ticket = DF_Stats$Ticket,
-                            EntryTime = as.character(as.POSIXct(DF_Stats$EntryTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
-                            ExitTime = as.character(as.POSIXct(DF_Stats$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo")),
+                            EntryTime = as.POSIXct(DF_Stats$EntryTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo"),
+                            ExitTime = as.POSIXct(DF_Stats$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo"),
                             Profit = DF_Stats$Profit,
                             Symbol = DF_Stats$Symbol,
                             Type = DF_Stats$Type)
@@ -149,13 +150,21 @@ server <- function(input, output, session) {
     })
     
    output$data <- renderTable({
-      Stats()
+     Stats <-  data.frame(MagicNumber = Stats()$MagicNumber,
+                          Ticket = Stats()$Ticket,
+                          EntryTime = as.character(Stats()$EntryTime),
+                          ExitTime = as.character(Stats()$ExitTime),
+                          Profit = Stats()$Profit,
+                          Symbol = Stats()$Symbol,
+                          Type = Stats()$Type)
+     
+     Stats
       switch(input$Sort,
-           "MagicNumber" =  Stats()[order(Stats()$MagicNumber,decreasing = T),],
-           "Ticket" =  Stats()[order(Stats()$Ticket,decreasing = T),],
-           "EntryTime" =  Stats()[order(Stats()$EntryTime,decreasing = T),],
-           "ExitTime" =  Stats()[order(Stats()$ExitTime,decreasing = T),],
-           "Profit"=  Stats()[order(Stats()$Profit,decreasing = T),])
+           "MagicNumber" =  Stats[order(Stats$MagicNumber,decreasing = T),],
+           "Ticket" =  Stats[order(Stats$Ticket,decreasing = T),],
+           "EntryTime" =  Stats[order(Stats$EntryTime,decreasing = T),],
+           "ExitTime" =  Stats[order(Stats$ExitTime,decreasing = T),],
+           "Profit"=  Stats[order(Stats$Profit,decreasing = T),])
    })
     
     
@@ -171,21 +180,35 @@ server <- function(input, output, session) {
         }
       }
 
-      DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type))
-      cbind(DF_Balance,Balance)
+      DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type)) %>%  mutate(Balance) 
+      mutate(DF_Balance,ExitTime =  as.POSIXct(DF_Balance$ExitTime, format = "%Y-%m-%d %H:%M:%S", tz = "Africa/Cairo"))
+       
     })
     
     
     output$balance <- renderTable({
-      if(nrow(Stats())>0){DF_Balance()}
+      if(nrow(Stats())>0){
+         DF_Balance <-   data.frame(ExitTime = as.character(DF_Balance()$ExitTime),
+                   Profit = DF_Balance()$Profit,
+                   Symbol = DF_Balance()$Symbol,
+                   Balance = DF_Balance()$Balance)
+        
+        DF_Balance
+        }
       else{"NO DATA"}
     })
    
 #----------GRAPH TAB-----------------
   output$profitGraph <- renderPlot({
     if(nrow(Stats())>0){
-        graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
-        graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
+      graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity")
+    graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
+      
+    # ggplot(Stats(), aes(x = ExitTime , y = Profit))+ geom_bar(stat="identity")
+        
+     #   ggtitle(paste0(input$Symbol," PROFIT"))
+        
+      
     }
   })
     
@@ -193,6 +216,9 @@ server <- function(input, output, session) {
   output$balanceGraph <- renderPlot({
   
     if(nrow(Stats())>0){
+     
+      #exiteTime <- as.POSIXct(DF_Balance()$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo") 
+     
     graph <- ggplot(DF_Balance(), aes(x = ExitTime)) + 
              geom_line(aes(y = Balance), group = 1) +
              geom_line(aes(y = 0), group = 1,color = "red", size = 1)
@@ -239,7 +265,8 @@ server <- function(input, output, session) {
     
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
-        nrow(Stats())
+       str(Stats())
+      print(Stats())
     })
 }
 
