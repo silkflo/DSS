@@ -155,13 +155,21 @@ if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
     mutate(IsEnabled = 0)
   # write commands to disable systems
   DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+  colnames(DFT1MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT1MN,path_T1)
+  
   writeCommandViaCSV(DFT2MN,path_T2)
+  
   DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+  colnames(DFT3MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT3MN,path_T3)
+  
   DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+  colnames(DFT4MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT4MN,path_T4)
+  
   DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+  colnames(DFT5MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT5MN,path_T5)
 }
 
@@ -199,12 +207,20 @@ if(!class(DFT2)[1]=='try-error' && !class(DFT2MN)[1]=='try-error'){
     mutate(IsEnabled = 1)  
   # write commands to disable systems
   DFT1MN <- data.frame(DFT2MN$MagicNumber - 100, DFT2MN$IsEnabled)
+  colnames(DFT1MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT1MN,path_T1)
+  
   writeCommandViaCSV(DFT2MN,path_T2)
+  
   DFT3MN <- data.frame(DFT2MN$MagicNumber + 100, DFT2MN$IsEnabled)
+  colnames(DFT3MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT3MN,path_T3)
+  
   DFT4MN <- data.frame(DFT2MN$MagicNumber + 200, DFT2MN$IsEnabled)
+  colnames(DFT4MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT4MN,path_T4)
+  
   DFT5MN <- data.frame(DFT2MN$MagicNumber + 300, DFT2MN$IsEnabled)
+  colnames(DFT5MN) <- c("MagicNumber","isEnabled")
   writeCommandViaCSV(DFT5MN,path_T5)
 }

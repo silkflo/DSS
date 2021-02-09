@@ -8,6 +8,7 @@ library(lubridate)
 library(dplyr)
 library(ggplot2)
 library(DT)
+source("C:/DSS/Function/All_Path.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -68,10 +69,11 @@ server <- function(input, output, session) {
   
  #-----------DATA MANAGEMENT-------------- 
     file_path <- reactive({
-        Terminals <- data.frame(id = 1:4, TermPath = c("C:/Program Files (x86)/AM MT4 - Terminal 1/MQL4/Files/",
-                                                       "C:/Program Files (x86)/AM MT4 - Terminal 2/MQL4/Files/",
-                                                       "C:/Program Files (x86)/AM MT4 - Terminal 3/MQL4/Files/",
-                                                       "C:/Program Files (x86)/AM MT4 - Terminal 4/MQL4/Files/"),
+        Terminals <- data.frame(id = 1:5, TermPath = c("C:/DSS/_DATA/",
+                                                       "C:/DSS/_DATA/",
+                                                       "C:/DSS/_DATA/",
+                                                       "C:/DSS/_DATA/",
+                                                       "C:/DSS/_DATA/"),
                                 stringsAsFactors = F)
         
         paste0(Terminals[input$Terminal,2],"OrdersResultsT",input$Terminal,".csv")
