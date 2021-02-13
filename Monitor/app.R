@@ -6,8 +6,10 @@ library(magrittr)
 library(lazytrade)
 library(lubridate)
 library(dplyr)
-library(ggplot2)
+#library(ggplot2)
 library(DT)
+library(plotly)
+library(randomcoloR)
 #library(hrbrthemes)
 #source("C:/DSS/Function/All_Path.R")
 
@@ -29,7 +31,7 @@ ui <- fluidPage(
                                     column(6,dateInput(inputId = "To", label = "To", value = Sys.Date())))),
                                   column(width = 12,fluidRow(
                                     column(6,radioButtons(inputId = "Time",label = "Select the type of time", choices = c("Entry Time" , "Exit Time"),selected = "Exit Time")),
-                                    column(6,selectInput(inputId = "Sort", label = "Sort data by", choices = c("MagicNumber","Ticket","EntryTime", "ExitTime","Profit")))))
+                                    column(6,selectInput(inputId = "Sort", label = "Sort data by", choices = c("MagicNumber","Ticket","EntryTime", "ExitTime","Profit","Symbol")))))
                      )),
                      mainPanel(
                          tabsetPanel(type = "pills",
@@ -40,8 +42,8 @@ ui <- fluidPage(
                                                 tabPanel("Balance",tableOutput("balance")))),
                                      tabPanel("Graph",
                                               tabsetPanel(
-                                                tabPanel("Profit",plotOutput("profitGraph")),
-                                                tabPanel("Balance", plotOutput("balanceGraph")))),
+                                               tabPanel("Profit",plotlyOutput("profitGraph")),
+                                                tabPanel("Balance", plotlyOutput("balanceGraph")))),
                                      tabPanel( 
                                        "Report",br(),
                                                        column(width = 12,fluidRow(
@@ -80,7 +82,7 @@ server <- function(input, output, session) {
         paste0(Terminals[input$Terminal,2],"OrdersResultsT",input$Terminal,".csv")
       # file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
     })
-    
+#-----------------------------------------
     DF_Stats <- reactive({ 
        DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
    
@@ -92,16 +94,34 @@ server <- function(input, output, session) {
                             Symbol = DF_Stats$Symbol,
                             Type = DF_Stats$Type)
     })
-      
+#---------------------------------------      
     magicNumber <- reactive({
       unique(DF_Stats()$MagicNumber)
     })
-    
+#---------------------------------------    
     symbol <- reactive({
        unique(DF_Stats()$Symbol)
     })
-
-
+#---------------------------------------
+    DF_Balance <- reactive({
+      
+      Balance <- c()
+      DF_Balance <- Stats() 
+      mutate(DF_Balance,ExitTime =  as.POSIXct(DF_Balance$ExitTime, format = "%Y-%m-%d %H:%M:%S", tz = "Africa/Cairo"))
+      
+      for(i in  1:nrow(DF_Balance)){
+        if (i==1){
+          Balance[i] <- DF_Balance$Profit[i]
+        }
+        else{
+          Balance[i] <- DF_Balance$Profit[i]+ Balance[i-1]
+        }
+      }
+      
+      DF_Balance <- DF_Balance %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type)) %>%  mutate(Balance) 
+      DF_Balance[order(DF_Balance$ExitTime,decreasing = F),]
+    })
+#---------------------------------------    
     
 #-----------MANAGE SIDEBAR-------------    
     #Refresh data 
@@ -164,66 +184,77 @@ server <- function(input, output, session) {
            "Ticket" =  Stats[order(Stats$Ticket,decreasing = T),],
            "EntryTime" =  Stats[order(Stats$EntryTime,decreasing = T),],
            "ExitTime" =  Stats[order(Stats$ExitTime,decreasing = T),],
-           "Profit"=  Stats[order(Stats$Profit,decreasing = T),])
+           "Profit"=  Stats[order(Stats$Profit,decreasing = T),],
+           "Symbol"=  Stats[order(Stats$Symbol,decreasing = T),])
    })
-    
-    
-    DF_Balance <- reactive({
-      Balance <- c()
-     
-      for(i in  1:nrow(Stats())){
-        if (i==1){
-          Balance[i] <- Stats()$Profit[i]
-        }
-        else{
-          Balance[i] <- Stats()$Profit[i]+ Balance[i-1]
-        }
-      }
-
-      DF_Balance <- Stats() %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type)) %>%  mutate(Balance) 
-      mutate(DF_Balance,ExitTime =  as.POSIXct(DF_Balance$ExitTime, format = "%Y-%m-%d %H:%M:%S", tz = "Africa/Cairo"))
-       
-    })
-    
     
     output$balance <- renderTable({
       if(nrow(Stats())>0){
-         DF_Balance <-   data.frame(ExitTime = as.character(DF_Balance()$ExitTime),
+       
+         DF_Balance <- data.frame(ExitTime = as.character(DF_Balance()$ExitTime),
                    Profit = DF_Balance()$Profit,
                    Symbol = DF_Balance()$Symbol,
                    Balance = DF_Balance()$Balance)
-        
-        DF_Balance
-        }
+       
+        "ExitTime" =  DF_Balance[order(DF_Balance$ExitTime,decreasing = F),]
+       }
       else{"NO DATA"}
     })
    
 #----------GRAPH TAB-----------------
-  output$profitGraph <- renderPlot({
+  output$profitGraph <- renderPlotly({
     if(nrow(Stats())>0){
-      graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity")
-    graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
       
-    # ggplot(Stats(), aes(x = ExitTime , y = Profit))+ geom_bar(stat="identity")
-        
-     #   ggtitle(paste0(input$Symbol," PROFIT"))
-        
+      pair <- as.vector(unique(Stats()$Symbol))
+      color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
+      colorList <- vector("list",length(pair))
+      for (i in 1 : length(pair)){
+        Ps <- list(target = pair[i], value = list(marker =list(color = sample(color,1))))
+        colorList[[i]] <- Ps
+      }
       
+      if(input$MagicNum == "All"){
+        
+       graph <-  plot_ly(
+          type = 'scatter',
+          x = Stats()$ExitTime,
+          y = Stats()$Profit,
+          text = paste("Make: ", rownames(Stats()),
+                       "<br>hp: ", Stats()$ExitTime,
+                       "<br>qsec: ", Stats()$Profit,
+                       "<br>Cyl: ", Stats()$Symbol),
+          hoverinfo = 'text',
+          mode = 'markers',
+          transforms = list(
+            list(
+              type = 'groupby',
+              groups = Stats()$Symbol,
+              styles = colorList)))
+       }else
+        {
+            plot_ly(
+            x = Stats()$ExitTime,
+            y = Stats()$Profit,
+            type = "scatter",
+            mode = 'markers',
+            marker = list(color = sample(color,1)),
+            name = paste0(input$Symbol," PROFIT"))
+          }
     }
   })
     
   
-  output$balanceGraph <- renderPlot({
+  output$balanceGraph <- renderPlotly({
   
     if(nrow(Stats())>0){
-     
-      #exiteTime <- as.POSIXct(DF_Balance()$ExitTime, format = "%Y.%m.%d %H:%M:%S", tz = "Africa/Cairo") 
-     
-    graph <- ggplot(DF_Balance(), aes(x = ExitTime)) + 
-             geom_line(aes(y = Balance), group = 1) +
-             geom_line(aes(y = 0), group = 1,color = "red", size = 1)
-    graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," BALANCE"))
-    }
+
+      plot_ly(
+            DF_Balance(), x = ~DF_Balance()$ExitTime,
+              y = ~DF_Balance()$Balance,
+              type = 'scatter',
+              mode = 'lines',
+              name = paste0(input$Symbol," BALANCE"))
+     }
   })  
   
   
@@ -265,8 +296,8 @@ server <- function(input, output, session) {
     
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
-       str(Stats())
-      print(Stats())
+       str(DF_Balance())
+      print(DF_Balance())
     })
 }
 
