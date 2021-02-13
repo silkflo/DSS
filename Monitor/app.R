@@ -106,20 +106,28 @@ server <- function(input, output, session) {
     DF_Balance <- reactive({
       
       Balance <- c()
-      DF_Balance <- Stats() 
-      mutate(DF_Balance,ExitTime =  as.POSIXct(DF_Balance$ExitTime, format = "%Y-%m-%d %H:%M:%S", tz = "Africa/Cairo"))
+      DF_Balance <- Stats()
+      #mutate(DF_Balance,ExitTime =  as.POSIXct(DF_Balance$ExitTime, format = "%Y-%m-%d %H:%M:%S", tz = "Africa/Cairo"))
+      DF_Balance <- DF_Balance %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type)) 
+      DF_Balance <- DF_Balance[order(DF_Balance$Symbol,decreasing = F),]
+      #group_by(DF_Balance,Stats()$Symbol)
+      #pair <- as.vector(unique(Stats()$Symbol))
       
-      for(i in  1:nrow(DF_Balance)){
-        if (i==1){
-          Balance[i] <- DF_Balance$Profit[i]
-        }
-        else{
-          Balance[i] <- DF_Balance$Profit[i]+ Balance[i-1]
-        }
-      }
+                    for(i in  1:nrow(DF_Balance)){
+                if (i==1){
+                    Balance[i] <- DF_Balance$Profit[i]
+                }else if(DF_Balance$Symbol[i] != DF_Balance$Symbol[i-1] && i>1){
+                     Balance[i] <- DF_Balance$Profit[i]
+                }else{
+                  Balance[i] <- DF_Balance$Profit[i]+ Balance[i-1]
+                }
+              }
+    
+      DF_Balance <- DF_Balance %>%  mutate(Balance) 
+     # DF_Balance[order(DF_Balance$Symbol,decreasing = F),]
+      #  DF_Balance[order(DF_Balance$ExitTime,decreasing = F),]
       
-      DF_Balance <- DF_Balance %>% subset(select = -c(MagicNumber,Ticket,EntryTime,Type)) %>%  mutate(Balance) 
-      DF_Balance[order(DF_Balance$ExitTime,decreasing = F),]
+      DF_Balance
     })
 #---------------------------------------    
     
@@ -219,10 +227,9 @@ server <- function(input, output, session) {
           type = 'scatter',
           x = Stats()$ExitTime,
           y = Stats()$Profit,
-          text = paste("Make: ", rownames(Stats()),
-                       "<br>hp: ", Stats()$ExitTime,
-                       "<br>qsec: ", Stats()$Profit,
-                       "<br>Cyl: ", Stats()$Symbol),
+          text = paste("<br>Time: ", Stats()$ExitTime,
+                       "<br>Profit: ", Stats()$Profit,
+                       "<br>Symbol: ", Stats()$Symbol),
           hoverinfo = 'text',
           mode = 'markers',
           transforms = list(
@@ -248,12 +255,37 @@ server <- function(input, output, session) {
   
     if(nrow(Stats())>0){
 
-      plot_ly(
-            DF_Balance(), x = ~DF_Balance()$ExitTime,
-              y = ~DF_Balance()$Balance,
-              type = 'scatter',
-              mode = 'lines',
-              name = paste0(input$Symbol," BALANCE"))
+    #  graph <- plot_ly(
+    #        DF_Balance(), x = ~DF_Balance()$ExitTime,
+    #          y = ~DF_Balance()$Balance,
+    #          type = 'scatter',
+    #          mode = 'lines',
+    #          name = paste0(input$Symbol," BALANCE"))
+     
+      pair <- as.vector(unique(DF_Balance()$Symbol))
+      color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
+      colorList <- vector("list",length(pair))
+      
+      for (i in 1 : length(pair)){
+        Ps <- list(target = pair[i], value = list(line =list(color = sample(color,1))))
+        colorList[[i]] <- Ps
+      }
+      
+      graph <-  plot_ly(
+      type = 'scatter',
+      x = DF_Balance()$ExitTime,
+      y = DF_Balance()$Balance,
+      text = paste("<br>Time: ", DF_Balance()$ExitTime,
+                   "<br>Balance: ", DF_Balance()$Balance,
+                   "<br>Symbol: ", DF_Balance()$Symbol),
+      hoverinfo = 'text',
+      mode = 'lines',
+      
+      transforms = list(
+        list(
+          type = 'groupby',
+          groups = DF_Balance()$Symbol,
+          styles = colorList)))
      }
   })  
   
