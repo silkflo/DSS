@@ -27,7 +27,7 @@ ui <- fluidPage(
                                     column(6, selectInput(inputId = "MagicNum", label = "Select Magic Number", choices = 1:10)),
                                     column(6, selectInput(inputId = "Symbol", label = "Select the symbol",choices = 1:10)))),
                                   column(width = 12,fluidRow(
-                                    column(6,dateInput(inputId = "From", label = "From", value = Sys.Date()-30)),
+                                    column(6,dateInput(inputId = "From", label = "From", value = Sys.Date()-7)),
                                     column(6,dateInput(inputId = "To", label = "To", value = Sys.Date())))),
                                   column(width = 12,fluidRow(
                                #     column(6,radioButtons(inputId = "Time",label = "Select the type of time", choices = c("Entry Time" , "Exit Time"),selected = "Exit Time")),
@@ -46,19 +46,19 @@ ui <- fluidPage(
                                                 tabPanel("Balance", plotlyOutput("balanceGraph")))),
                                      tabPanel( 
                                        "Report",br(),
-                                                       column(width = 12,fluidRow(
+                                                       
+                                                      column(width = 12,fluidRow(
+                                         column(12,tableOutput("result")))),
+                                                      column(width = 12,fluidRow(
                                          column(3,strong("Total Trades :", style = "text-decoration: underline;")),
                                          column(3,textOutput("totalTrade")))),
-                                                      column(width = 12,fluidRow(
-                                          column(3,strong("Final Balance :", style = "text-decoration: underline;")),
-                                          column(3,tableOutput("finalBalance")))),
                                                       column(width = 12, fluidRow(
                                           column(3,strong("Profit Factor :", style = "text-decoration: underline;")),
                                           column(3,textOutput("profitFactor")))),
-                                       column(width = 12, fluidRow(
+                                                       column(width = 12, fluidRow(
                                          column(3,strong("Maximum Profit :", style = "text-decoration: underline;")),
                                          column(3,textOutput("maxProfit")))),
-                                       column(width = 12, fluidRow(
+                                                       column(width = 12, fluidRow(
                                          column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
                                          column(3,textOutput("minProfit"))))
                                                       )))))))
@@ -310,7 +310,6 @@ server <- function(input, output, session) {
                    "<br>Symbol: ", DF_Balance()$Symbol),
       hoverinfo = 'text',
       mode = 'lines',
-      
       transforms = list(
         list(
           type = 'groupby',
@@ -322,35 +321,159 @@ server <- function(input, output, session) {
   
   
   #-------REPORT TAB-----------------
-    
+    buyProfit <- reactive({
 
-  output$finalBalance <- renderTable({
+      if(input$MagicNum == "All"){
+       
+       allProfit <-  Stats()  %>%
+          group_by(Type) %>% 
+          filter(Type == 0) %>%
+          summarise( Profit = sum(Profit)) %>%
+          select(-c(Type)) %>%
+          mutate(Symbol = "ALL PAIR")
+     
+        
+        buyProfit <- Stats()  %>%
+          group_by(Symbol, Type) %>% 
+          filter(Type == 0) %>% 
+          summarise( Profit = sum(Profit)) %>% 
+          subset(select = c(Symbol,Profit)) %>%
+          rbind(allProfit)
+        
+      } else{
+        buyProfit <- Stats()  %>%
+          group_by(Symbol, Type) %>% 
+          summarise( Profit = sum(Profit)) %>% 
+          filter(Type == 0) %>% 
+          subset(select = c(Symbol,Profit))
+      }
+    })
+  
+  
+  sellProfit <- reactive({
+    
+    if(input$MagicNum == "All"){
+      
+      allProfit <-  Stats()  %>%
+        group_by(Type) %>% 
+       filter(Type == 1) %>%
+        summarise( Profit = sum(Profit)) %>%
+        select(-c(Type)) %>%
+        mutate(Symbol = "ALL PAIR")
+      
+      sellProfit <- Stats()  %>%
+        group_by(Symbol, Type) %>% 
+        filter(Type == 1) %>% 
+        summarise( Profit = sum(Profit)) %>% 
+        subset(select = c(Symbol,Profit)) %>%
+        rbind(allProfit)
+      
+    } else{
+      sellProfit <- Stats()  %>%
+        group_by(Symbol, Type) %>% 
+        filter(Type == 1) %>% 
+        summarise( Profit = sum(Profit)) %>% 
+        subset(select = c(Symbol,Profit))
+    }
+  })
+  
+ buyTrade <- reactive({
+   
+   if(input$MagicNum == "All"){
+     
+
+     allTrade <-  Stats()  %>%
+       group_by(Type) %>% 
+       filter(Type == 0) %>%
+       summarise( Buy_Trade = n()) %>%
+       select(-c(Type)) %>%
+       mutate(Symbol = "ALL PAIR")
+     
+     
+     buyTrade <- Stats()  %>%
+       group_by(Symbol, Type) %>% 
+       filter(Type == 0) %>% 
+       summarise( Buy_Trade = n()) %>% 
+       subset(select = c(Symbol,Buy_Trade)) %>%
+       rbind(allTrade)
+     
+   } else{
+     buyTrade <- Stats()  %>%
+       group_by(Symbol, Type) %>% 
+       summarise(Buy_Trade = n()) %>% 
+       filter(Type == 0) %>% 
+       subset(select = c(Symbol,Buy_Trade))
+   }
+ })
+ 
+ sellTrade <- reactive({
+   
+   if(input$MagicNum == "All"){
+     
+     
+     allTrade <-  Stats()  %>%
+       group_by(Type) %>% 
+       filter(Type == 1) %>%
+       summarise( Sell_Trade = n()) %>%
+       select(-c(Type)) %>%
+       mutate(Symbol = "ALL PAIR")
+     
+     
+     sellTrade <- Stats()  %>%
+       group_by(Symbol, Type) %>% 
+       filter(Type == 1) %>% 
+       summarise( Sell_Trade = n()) %>% 
+       subset(select = c(Symbol,Sell_Trade)) %>%
+       rbind(allTrade)
+     
+   } else{
+     sellTrade <- Stats()  %>%
+       group_by(Symbol, Type) %>% 
+       filter(Type == 1) %>% 
+       summarise(Sell_Trade = n()) %>% 
+       subset(select = c(Symbol,Sell_Trade))
+   }
+ })
+ 
+ 
+ 
+  
+
+  output$result <- renderTable({
     if(nrow(Stats()>0)){
       
-    
-      DF_allPair <- DF_Balance_All()
-     
-      allPair <- round(DF_allPair[nrow(DF_allPair),4],2)
-      
-      final_Balance  <- vector("numeric", length(pair()))
-      
-      for (i in 1: length(pair())){
+     DF_allPair <- DF_Balance_All()
+     allPair <- round(DF_allPair[nrow(DF_allPair),4],2)
+   
+     final_Balance  <- vector("numeric", length(pair()))
+     for (i in 1: length(pair())){
         pairBalance <-  DF_Balance() %>% filter(Symbol == pair()[i])
         final_Balance[i]  <- round(pairBalance[nrow(pairBalance),4],2)
       }
       
+      Final_Balance <- data.frame(Symbol = pair(),
+                                  Final_Balance = final_Balance) 
       
-     Final_Balance <- data.frame(Symbol = pair(),
-                                  final_Balance) 
-     
-      
-       All_Pair <- c("ALL PAIR", allPair)
-     Final_Balance <- rbind(Final_Balance,All_Pair)  
-      
-      
-      
-      Final_Balance
+      if(input$MagicNum == "All"){
+           All_Pair <- c("ALL PAIR", allPair)
+           
+          Final_Balance <- rbind(Final_Balance,All_Pair)  
+          Final_Balance <- left_join(x = Final_Balance,y = buyProfit(), by = "Symbol")
+           Final_Balance <- left_join(x = Final_Balance,y = sellProfit(), by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance, y = buyTrade(),by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance, y = sellTrade(),by = "Symbol") 
+          
+      }else{
+          Final_Balance <- left_join(x = Final_Balance,y = buyProfit(), by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance,y = sellProfit(), by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance, y = buyTrade(),by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance, y = sellTrade(),by = "Symbol") 
       }
+          FB <- as.data.frame(Final_Balance)
+          FB[is.na(FB)] <- 0
+          FB <- FB %>% cbind(FB$Buy_Trade + FB$Sell_Trade) %>%
+            set_names(c("Symbol","Final_Balance","Buy_Profit","Sell_Profit","Buy_Trade","Sell_Trade", "Total_Trade"))
+       }
     else{"NO DATA"}
   })
  
@@ -383,10 +506,9 @@ server <- function(input, output, session) {
     
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
-        
-  DF_Balance <- DF_Balance_All()
- print(DF_Balance) 
-     
+      str(sellTrade())
+      print(sellTrade())
+   
     })
 }
 
