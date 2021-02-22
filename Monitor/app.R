@@ -6,13 +6,14 @@ library(magrittr)
 library(lazytrade)
 library(lubridate)
 library(dplyr)
+library(readr)
 #library(ggplot2)
 library(DT)
 library(plotly)
 library(randomcoloR)
 #library(hrbrthemes)
 #source("C:/DSS/Function/All_Path.R")
-source("C:/DSS/Monitor/global.R")
+#source("C:/DSS/Monitor/global.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -67,7 +68,7 @@ ui <- fluidPage(
                      
                    ),
         tabPanel(
-          "AI",sidebarLayout(
+          "UPDATE MODEL",sidebarLayout(
             sidebarPanel(
               sliderInput("rows",
                           "Number of rows:",
@@ -81,7 +82,7 @@ ui <- fluidPage(
               actionButton(inputId = "BEV", label = "BEV"),
               actionButton(inputId = "RAN", label = "RAN"),
               actionButton(inputId = "RAV", label = "RAV"),
-              actionButton(inputId ="refresh2", label = 'boom')
+              actionButton(inputId ="BOOM", label = 'boom')
             ),
             mainPanel(
               plotOutput("AI_Data")
@@ -97,15 +98,21 @@ server <- function(input, output, session) {
   
  #-----------DATA MANAGEMENT-------------- 
     file_path <- reactive({
-        Terminals <- data.frame(id = 1:5, TermPath = c("C:/DSS/_DATA/",
-                                                       "C:/DSS/_DATA/",
-                                                       "C:/DSS/_DATA/",
-                                                       "C:/DSS/_DATA/",
-                                                       "C:/DSS/_DATA/"),
-                                stringsAsFactors = F)
-        
-        paste0(Terminals[input$Terminal,2],"OrdersResultsT",input$Terminal,".csv")
-      # file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
+  #   Terminals <- data.frame(id = 1:5, TermPath = c("C:/DSS/_DATA/",
+  #                                                  "C:/DSS/_DATA/",
+  #                                                  "C:/DSS/_DATA/",
+  #                                                  "C:/DSS/_DATA/",
+  #                                                  "C:/DSS/_DATA/"),
+  #                           stringsAsFactors = F)
+  #   
+  #   paste0(Terminals[input$Terminal,2],"OrdersResultsT",input$Terminal,".csv")
+  #  file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
+  #     
+        Terminals <- normalizePath(Sys.getenv(paste0('PATH_T',input$Terminal)), winslash = '/')
+        file_path <- paste0(Terminals,"/OrdersResultsT",input$Terminal,".csv")
+                                       
+                                       
+                                       
     })
 #-----------------------------------------
     DF_Stats <- reactive({ 
@@ -536,9 +543,60 @@ server <- function(input, output, session) {
 
   
 ###################################################################
-####################### - AI - ####################################
+####################### - UPDATE MODEL - ####################################
 ###################################################################
+  ####GLOBAL
+# 
+ #global.r
+ #read dataset
+ 
+ #path to user repo:
+ #!!!Change this path!!! 
+ #path_user <- "C:/DSS_Bot/DSS_R"
+ path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+ 
+ path_data <- file.path(path_user, "_DATA")
+ 
+ #function to get data for this App to work
+ get_data <- function(){
+   macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
+   return(macd_ai)}
+ #use this function
+ macd_ai <- get_data()
+ #function to write data
+ write_data <- function(x){
+   readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
+ }
+ 
+ #output data from this app
+ file_checked <- file.path(path_data, "macd_checked_60M.rds")
+ 
+ # function that writes data to rds file 
+ storeData <- function(data, fileName) {
+   
+   # store store gathered unique records
+   # non duplicates
+   nonDuplicate <- data[!duplicated(data), ]
+   
+   # read existing file, if that exists...
+   if(file.exists(fileName)){
+     ex_data <- readr::read_rds(fileName)
+     # append...
+     agr_data <- dplyr::bind_rows(ex_data, nonDuplicate)
+     # Write the file to the local system
+     readr::write_rds(x = agr_data, file = fileName)
+     # write data first time...
+   } else {
+     # Write the file to the local system
+     readr::write_rds(x = nonDuplicate, file = fileName)
+   }
+   
+   
+   
+ }
+ 
   
+  ####
   
   
   
@@ -546,7 +604,7 @@ server <- function(input, output, session) {
   n_rows <- reactiveValues(c = nrow(macd_ai))
   
   #get data on pressing the button
-  observeEvent(input$refresh2, {
+  observeEvent(input$BOOM, {
     n_rows$c <- nrow(macd_ai)
     updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1) 
   })

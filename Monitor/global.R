@@ -3,7 +3,9 @@
 library(readr)
 #path to user repo:
 #!!!Change this path!!! 
-path_user <- "C:/DSS_Bot/DSS_R"
+#path_user <- "C:/DSS_Bot/DSS_R"
+path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+
 path_data <- file.path(path_user, "_DATA")
 
 #function to get data for this App to work
