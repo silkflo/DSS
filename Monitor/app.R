@@ -12,6 +12,7 @@ library(plotly)
 library(randomcoloR)
 #library(hrbrthemes)
 #source("C:/DSS/Function/All_Path.R")
+source("C:/DSS/Monitor/global.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -273,7 +274,7 @@ server <- function(input, output, session) {
 #----------GRAPH TAB-----------------
   output$profitGraph <- renderPlotly({
     if(nrow(Stats())>0){
-<<<<<<< Updated upstream
+
       
      
       color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
@@ -309,11 +310,11 @@ server <- function(input, output, session) {
             marker = list(color = sample(color,1)),
             name = paste0(input$Symbol," PROFIT"))
           }
-=======
+
         graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
         graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
         
->>>>>>> Stashed changes
+
     }
   })
     
