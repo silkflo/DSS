@@ -61,7 +61,31 @@ ui <- fluidPage(
                                                        column(width = 12, fluidRow(
                                          column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
                                          column(3,textOutput("minProfit"))))
-                                                      )))))))
+                                                      )))),
+                
+                     
+                   ),
+        tabPanel(
+          "AI",sidebarLayout(
+            sidebarPanel(
+              sliderInput("rows",
+                          "Number of rows:",
+                          min = 1,
+                          max = nrow(macd_ai),
+                          value = 1,
+                          step = 1),
+              actionButton(inputId = "BUN", label = "BUN"),
+              actionButton(inputId = "BUV", label = "BUV"),
+              actionButton(inputId = "BEN", label = "BEN"),
+              actionButton(inputId = "BEV", label = "BEV"),
+              actionButton(inputId = "RAN", label = "RAN"),
+              actionButton(inputId = "RAV", label = "RAV"),
+              actionButton(inputId ="refresh2", label = 'boom')
+            ),
+            mainPanel(
+              plotOutput("AI_Data")
+            ))
+        )))
 
 ########################################### END OF UI #################################################
 #######################################################################################################
@@ -502,6 +526,111 @@ server <- function(input, output, session) {
   })
  
   #max consecutive win/loss
+
+  
+###################################################################
+####################### - AI - ####################################
+###################################################################
+  
+  
+  
+  
+  #define reactive value to be number of rows in the dataset
+  n_rows <- reactiveValues(c = nrow(macd_ai))
+  
+  #get data on pressing the button
+  observeEvent(input$refresh2, {
+    n_rows$c <- nrow(macd_ai)
+    updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1) 
+  })
+  
+  #current market type value
+  mt_analysed <- reactive({ mt_analysed <- macd_ai[input$rows, 65]})
+  #current data row
+  ln_analysed <- reactive({ ln_analysed <- macd_ai[input$rows, ]})
+  
+  #write data while pressing a button
+  observeEvent(input$BUN, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'BUN')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  }) 
+  
+  
+  #write data while pressing a button.
+  observeEvent(input$BUV, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'BUV')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  })
+  
+  #write data while pressing a button
+  observeEvent(input$BUN, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'BEN')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  })
+  
+  
+  #write data while pressing a button
+  observeEvent(input$BUV, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'BEV')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  })
+  #write data while pressing a button
+  observeEvent(input$RAV, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'RAV')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  })
+  
+  
+  #write data while pressing a button
+  observeEvent(input$RAN, {
+    #dataframe to add new market type
+    df <- tibble::tibble(M_T = 'RAN')
+    #new line of data to store
+    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+    storeData(ln_new, file_checked)
+    macd_ai <<- macd_ai[-input$rows, ]
+    write_data(macd_ai)
+  })
+  
+  
+  #graphs and outputs
+  output$AI_Data <- renderPlot({
+    
+    # generate bins based on input$bins from ui.R
+    #To Do create a Shiny APP to scroll through!
+    plot(x = 1:64, y = macd_ai[input$rows, 1:64], main = mt_analysed())
+    abline(h=0, col="blue")
+    
+    #plot(x = 1:64, y = macd_ai[3, 1:64])
+    
+    
+  })
+  
   
     
 #---------------END CODE------------------------------------------
