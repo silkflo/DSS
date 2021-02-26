@@ -12,7 +12,8 @@ library(DT)
 library(plotly)
 library(randomcoloR)
 library(rsconnect)
-rsconnect::deployApp('C:/DSS/Monitor')
+library(h2o)
+#rsconnect::deployApp('C:/DSS/Monitor/')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
