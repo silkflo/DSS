@@ -561,8 +561,7 @@ server <- function(input, output, session) {
  get_data <- function(){
    macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
    return(macd_ai)}
- #use this function
- macd_ai <- get_data()
+ 
  #function to write data
  write_data <- function(x){
    readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
@@ -598,8 +597,8 @@ server <- function(input, output, session) {
   
   ####
   
-  
-  
+
+ macd_ai <- get_data()
   #define reactive value to be number of rows in the dataset
   n_rows <- reactiveValues(c = nrow(macd_ai))
   

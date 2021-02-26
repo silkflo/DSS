@@ -5,9 +5,9 @@ rem Use in case some content needs to be replaced (reverted from Version Control
 setlocal enabledelayedexpansion
 
 :: Source Directory where Version Control Repository is located
-set SOURCE_DIR="E:\trading\Git\Include"
+set SOURCE_DIR="C:\Include"
 :: Destination Directory where Expert Advisor is located
-set DEST_DIR="C:\Program Files (x86)\AM MT4 - Terminal 2\MQL4\Include"
+set DEST_DIR="C:\Program Files (x86)\MT4 - Terminal 2\MQL4\Include"
 
 ROBOCOPY %SOURCE_DIR% %DEST_DIR% *.mq4
 
