@@ -9,11 +9,11 @@ path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
 path_data <- file.path(path_user, "_DATA")
 
 #function to get data for this App to work
-get_data <- function(){
+#get_data <- function(){
   macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
-  return(macd_ai)}
+#  return(macd_ai)}
 #use this function
-macd_ai <- get_data()
+# macd_ai <- get_data()
 #function to write data
 write_data <- function(x){
   readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))

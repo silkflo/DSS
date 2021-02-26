@@ -7,13 +7,12 @@ library(lazytrade)
 library(lubridate)
 library(dplyr)
 library(readr)
-#library(ggplot2)
+library(ggplot2)
 library(DT)
 library(plotly)
 library(randomcoloR)
-#library(hrbrthemes)
-#source("C:/DSS/Function/All_Path.R")
-#source("C:/DSS/Monitor/global.R")
+library(rsconnect)
+rsconnect::deployApp('C:/DSS/Monitor')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -68,26 +67,34 @@ ui <- fluidPage(
                      
                    ),
         tabPanel(
-          "UPDATE MODEL",sidebarLayout(
+          "MT INSPECTION",sidebarLayout(
             sidebarPanel(
-              sliderInput("rows",
-                          "Number of rows:",
-                          min = 1,
-                          max = nrow(macd_ai),
-                          value = 1,
-                          step = 1),
-              actionButton(inputId = "BUN", label = "BUN"),
-              actionButton(inputId = "BUV", label = "BUV"),
-              actionButton(inputId = "BEN", label = "BEN"),
-              actionButton(inputId = "BEV", label = "BEV"),
-              actionButton(inputId = "RAN", label = "RAN"),
-              actionButton(inputId = "RAV", label = "RAV"),
-              actionButton(inputId ="BOOM", label = 'boom')
+           #   sliderInput("rows",
+           #               "Number of rows:",
+           #               min = 1,
+           #               max = nrow(macd_ai),
+           #               value = 1,
+           #               step = 1),
+           #   actionButton(inputId = "BUN", label = "BUN"),
+           #   actionButton(inputId = "BUV", label = "BUV"),
+           #   actionButton(inputId = "BEN", label = "BEN"),
+           #   actionButton(inputId = "BEV", label = "BEV"),
+           #   actionButton(inputId = "RAN", label = "RAN"),
+           #   actionButton(inputId = "RAV", label = "RAV"),
+           #  actionButton(inputId ="BOOM", label = 'boom')
             ),
             mainPanel(
-              plotOutput("AI_Data")
+             # plotOutput("AI_Data")
+              p("In construction")
             ))
-        )))
+        ),
+        tabPanel(
+          "LOG RESULT", sidebarLayout(
+            sidebarPanel(actionButton(inputId = "RefreshM60", label = "Refresh")),
+            mainPanel(tabsetPanel(type = "pills",
+                                  tabPanel("Result",tableOutput("AnalyseResult")),
+                                  tabPanel("Graph",plotOutput("strategyTestResults"),
+                                                  plotOutput(("modelPerformance")))))))))
 
 ########################################### END OF UI #################################################
 #######################################################################################################
@@ -98,22 +105,12 @@ server <- function(input, output, session) {
   
  #-----------DATA MANAGEMENT-------------- 
     file_path <- reactive({
-  #   Terminals <- data.frame(id = 1:5, TermPath = c("C:/DSS/_DATA/",
-  #                                                  "C:/DSS/_DATA/",
-  #                                                  "C:/DSS/_DATA/",
-  #                                                  "C:/DSS/_DATA/",
-  #                                                  "C:/DSS/_DATA/"),
-  #                           stringsAsFactors = F)
-  #   
-  #   paste0(Terminals[input$Terminal,2],"OrdersResultsT",input$Terminal,".csv")
-  #  file_path <- paste0(Terminals[2,2],"OrdersResultsT",2,".csv")
-  #     
+
+   #  Terminals <- normalizePath(Sys.getenv('PATH_T1'), winslash = '/')
+   #  file_path <- paste0(Terminals,"/OrdersResultsT",1,".csv")      
         Terminals <- normalizePath(Sys.getenv(paste0('PATH_T',input$Terminal)), winslash = '/')
         file_path <- paste0(Terminals,"/OrdersResultsT",input$Terminal,".csv")
-                                       
-                                       
-                                       
-    })
+   })
 #-----------------------------------------
     DF_Stats <- reactive({ 
        DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
@@ -177,7 +174,7 @@ server <- function(input, output, session) {
     #---------DATA TAB---------------  
     Stats <- reactive({
       if(input$MagicNum == "All"){
-        DF_Stats <- DF_Stats()%>%filter(ExitTime >= input$From, ExitTime <= input$To)
+        DF_Stats <- DF_Stats()%>%filter(ExitTime >= input$From, ExitTime <= paste0(input$To," 23:59:59"))
       }
       else{
         
@@ -250,10 +247,7 @@ server <- function(input, output, session) {
      }
      
      DF_Balance <- DF_Balance %>%  mutate(Balance) 
-     
-     
-   })
-   
+  })
    
    
     output$balance <- renderTable({
@@ -273,8 +267,7 @@ server <- function(input, output, session) {
                                    Symbol = DF_Balance_All()$Symbol,
                                    Balance = DF_Balance_All()$Balance)
         }
-        
-        }
+      }
       else{"NO DATA"}
     })
    
@@ -282,17 +275,15 @@ server <- function(input, output, session) {
   output$profitGraph <- renderPlotly({
     if(nrow(Stats())>0){
 
-      
-     
       color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
       colorList <- vector("list",length(pair()))
+      
       for (i in 1 : length(pair())){
-        Ps <- list(target = pair()[i], value = list(marker =list(color = sample(color,1))))
-        colorList[[i]] <- Ps
+          Ps <- list(target = pair()[i], value = list(marker =list(color = sample(color,1))))
+          colorList[[i]] <- Ps
       }
       
       if(input$MagicNum == "All"){
-        
        graph <-  plot_ly(
           type = 'scatter',
           x = Stats()$ExitTime,
@@ -316,27 +307,20 @@ server <- function(input, output, session) {
             mode = 'markers',
             marker = list(color = sample(color,1)),
             name = paste0(input$Symbol," PROFIT"))
-          }
-
-        graph <- ggplot(Stats(), aes(x=ExitTime, y=Profit)) +  geom_bar(stat = "identity" )
-        graph + theme(axis.text.x = element_text(angle =  45))  + ggtitle(paste0(input$Symbol," PROFIT"))
-        
-
-    }
+        }
+      }
   })
     
   
   output$balanceGraph <- renderPlotly({
   
     if(nrow(Stats())>0){
-
-      #pair <- as.vector(unique(DF_Balance()$Symbol))
       color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
       colorList <- vector("list",length(pair()))
       
       for (i in 1 : length(pair())){
-        Ps <- list(target = pair()[i], value = list(line =list(color = sample(color,1))))
-        colorList[[i]] <- Ps
+          Ps <- list(target = pair()[i], value = list(line =list(color = sample(color,1))))
+          colorList[[i]] <- Ps
       }
       
       graph <-  plot_ly(
@@ -362,28 +346,27 @@ server <- function(input, output, session) {
     buyProfit <- reactive({
 
       if(input$MagicNum == "All"){
-       
-       allProfit <-  Stats()  %>%
-          group_by(Type) %>% 
-          filter(Type == 0) %>%
-          summarise( Profit = sum(Profit)) %>%
-          select(-c(Type)) %>%
-          mutate(Symbol = "ALL PAIR")
+          allProfit <-  Stats()  %>%
+                        group_by(Type) %>% 
+                        filter(Type == 0) %>%
+                        summarise( Profit = sum(Profit)) %>%
+                        select(-c(Type)) %>%
+                        mutate(Symbol = "ALL PAIR")
      
         
-        buyProfit <- Stats()  %>%
-          group_by(Symbol, Type) %>% 
-          filter(Type == 0) %>% 
-          summarise( Profit = sum(Profit)) %>% 
-          subset(select = c(Symbol,Profit)) %>%
-          rbind(allProfit)
+          buyProfit <-  Stats()  %>%
+                        group_by(Symbol, Type) %>% 
+                        filter(Type == 0) %>% 
+                        summarise( Profit = sum(Profit)) %>% 
+                        subset(select = c(Symbol,Profit)) %>%
+                        rbind(allProfit)
         
       } else{
-        buyProfit <- Stats()  %>%
-          group_by(Symbol, Type) %>% 
-          summarise( Profit = sum(Profit)) %>% 
-          filter(Type == 0) %>% 
-          subset(select = c(Symbol,Profit))
+        buyProfit <-  Stats()  %>%
+                      group_by(Symbol, Type) %>% 
+                      summarise( Profit = sum(Profit)) %>% 
+                      filter(Type == 0) %>% 
+                      subset(select = c(Symbol,Profit))
       }
     })
   
@@ -391,113 +374,101 @@ server <- function(input, output, session) {
   sellProfit <- reactive({
     
     if(input$MagicNum == "All"){
+         allProfit <-  Stats()  %>%
+                       group_by(Type) %>% 
+                       filter(Type == 1) %>%
+                       summarise( Profit = sum(Profit)) %>%
+                       select(-c(Type)) %>%
+                       mutate(Symbol = "ALL PAIR")
       
-      allProfit <-  Stats()  %>%
-        group_by(Type) %>% 
-       filter(Type == 1) %>%
-        summarise( Profit = sum(Profit)) %>%
-        select(-c(Type)) %>%
-        mutate(Symbol = "ALL PAIR")
-      
-      sellProfit <- Stats()  %>%
-        group_by(Symbol, Type) %>% 
-        filter(Type == 1) %>% 
-        summarise( Profit = sum(Profit)) %>% 
-        subset(select = c(Symbol,Profit)) %>%
-        rbind(allProfit)
+        sellProfit <- Stats()  %>%
+                      group_by(Symbol, Type) %>% 
+                      filter(Type == 1) %>% 
+                      summarise( Profit = sum(Profit)) %>% 
+                      subset(select = c(Symbol,Profit)) %>%
+                      rbind(allProfit)
       
     } else{
-      sellProfit <- Stats()  %>%
-        group_by(Symbol, Type) %>% 
-        filter(Type == 1) %>% 
-        summarise( Profit = sum(Profit)) %>% 
-        subset(select = c(Symbol,Profit))
+        sellProfit <- Stats()  %>%
+                      group_by(Symbol, Type) %>% 
+                      filter(Type == 1) %>% 
+                      summarise( Profit = sum(Profit)) %>% 
+                      subset(select = c(Symbol,Profit))
     }
   })
   
  buyTrade <- reactive({
    
    if(input$MagicNum == "All"){
+        allTrade <-  Stats()  %>%
+                     group_by(Type) %>% 
+                     filter(Type == 0) %>%
+                     summarise( Buy_Trade = n()) %>%
+                     select(-c(Type)) %>%
+                     mutate(Symbol = "ALL PAIR")
      
-
-     allTrade <-  Stats()  %>%
-       group_by(Type) %>% 
-       filter(Type == 0) %>%
-       summarise( Buy_Trade = n()) %>%
-       select(-c(Type)) %>%
-       mutate(Symbol = "ALL PAIR")
-     
-     
-     buyTrade <- Stats()  %>%
-       group_by(Symbol, Type) %>% 
-       filter(Type == 0) %>% 
-       summarise( Buy_Trade = n()) %>% 
-       subset(select = c(Symbol,Buy_Trade)) %>%
-       rbind(allTrade)
+        buyTrade <- Stats()  %>%
+                    group_by(Symbol, Type) %>% 
+                    filter(Type == 0) %>% 
+                    summarise( Buy_Trade = n()) %>% 
+                    subset(select = c(Symbol,Buy_Trade)) %>%
+                    rbind(allTrade)
      
    } else{
-     buyTrade <- Stats()  %>%
-       group_by(Symbol, Type) %>% 
-       summarise(Buy_Trade = n()) %>% 
-       filter(Type == 0) %>% 
-       subset(select = c(Symbol,Buy_Trade))
+        buyTrade <- Stats()  %>%
+                    group_by(Symbol, Type) %>% 
+                    summarise(Buy_Trade = n()) %>% 
+                    filter(Type == 0) %>% 
+                    subset(select = c(Symbol,Buy_Trade))
    }
  })
  
  sellTrade <- reactive({
    
    if(input$MagicNum == "All"){
+        allTrade <-  Stats()  %>%
+                     group_by(Type) %>% 
+                     filter(Type == 1) %>%
+                     summarise( Sell_Trade = n()) %>%
+                     select(-c(Type)) %>%
+                     mutate(Symbol = "ALL PAIR")
      
-     
-     allTrade <-  Stats()  %>%
-       group_by(Type) %>% 
-       filter(Type == 1) %>%
-       summarise( Sell_Trade = n()) %>%
-       select(-c(Type)) %>%
-       mutate(Symbol = "ALL PAIR")
-     
-     
-     sellTrade <- Stats()  %>%
-       group_by(Symbol, Type) %>% 
-       filter(Type == 1) %>% 
-       summarise( Sell_Trade = n()) %>% 
-       subset(select = c(Symbol,Sell_Trade)) %>%
-       rbind(allTrade)
-     
+        sellTrade <- Stats()  %>%
+                     group_by(Symbol, Type) %>% 
+                     filter(Type == 1) %>% 
+                     summarise( Sell_Trade = n()) %>% 
+                     subset(select = c(Symbol,Sell_Trade)) %>%
+                     rbind(allTrade)
    } else{
-     sellTrade <- Stats()  %>%
-       group_by(Symbol, Type) %>% 
-       filter(Type == 1) %>% 
-       summarise(Sell_Trade = n()) %>% 
-       subset(select = c(Symbol,Sell_Trade))
+        sellTrade <- Stats()  %>%
+                     group_by(Symbol, Type) %>% 
+                     filter(Type == 1) %>% 
+                     summarise(Sell_Trade = n()) %>% 
+                     subset(select = c(Symbol,Sell_Trade))
    }
  })
  
- 
- 
-  
-
   output$result <- renderTable({
+    
     if(nrow(Stats()>0)){
+         DF_allPair <- DF_Balance_All()
+         allPair <- round(DF_allPair[nrow(DF_allPair),4],2)
+         final_Balance  <- vector("numeric", length(pair()))
+     
+         for (i in 1: length(pair())){
+              pairBalance <-  DF_Balance() %>% filter(Symbol == pair()[i])
+              final_Balance[i]  <- round(pairBalance[nrow(pairBalance),4],2)
+          }
       
-     DF_allPair <- DF_Balance_All()
-     allPair <- round(DF_allPair[nrow(DF_allPair),4],2)
-   
-     final_Balance  <- vector("numeric", length(pair()))
-     for (i in 1: length(pair())){
-        pairBalance <-  DF_Balance() %>% filter(Symbol == pair()[i])
-        final_Balance[i]  <- round(pairBalance[nrow(pairBalance),4],2)
-      }
+           Final_Balance <- data.frame(Symbol = pair(),
+                            Final_Balance = final_Balance) 
       
-      Final_Balance <- data.frame(Symbol = pair(),
-                                  Final_Balance = final_Balance) 
-      
-      if(input$MagicNum == "All"){
-           All_Pair <- c("ALL PAIR", allPair)
+     if(input$MagicNum == "All"){
+          All_Pair <- c("ALL PAIR", allPair)
            
           Final_Balance <- rbind(Final_Balance,All_Pair)  
           Final_Balance <- left_join(x = Final_Balance,y = buyProfit(), by = "Symbol")
-           Final_Balance <- left_join(x = Final_Balance,y = sellProfit(), by = "Symbol")
+          Final_Balance <- left_join(x = Final_Balance,y = sellProfit(), by = "Symbol")
           Final_Balance <- left_join(x = Final_Balance, y = buyTrade(),by = "Symbol")
           Final_Balance <- left_join(x = Final_Balance, y = sellTrade(),by = "Symbol") 
           
@@ -517,11 +488,11 @@ server <- function(input, output, session) {
  
   output$profitFactor <- renderText({
       if(nrow(Stats()>0)){
-         negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%sum()
-         posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%sum()
-         round(abs(posProfit/negProfit),2)
+            negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%sum()
+            posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%sum()
+            round(abs(posProfit/negProfit),2)
       }else{
-        "NO DATA"
+            "NO DATA"
       }
   })
     
@@ -543,167 +514,230 @@ server <- function(input, output, session) {
 
   
 ###################################################################
-####################### - UPDATE MODEL - ####################################
+####################### - MT INSPECTION - #########################
 ###################################################################
-  ####GLOBAL
-# 
- #global.r
- #read dataset
- 
- #path to user repo:
- #!!!Change this path!!! 
- #path_user <- "C:/DSS_Bot/DSS_R"
- path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
- 
- path_data <- file.path(path_user, "_DATA")
- 
- #function to get data for this App to work
- get_data <- function(){
-   macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
-   return(macd_ai)}
- 
- #function to write data
- write_data <- function(x){
-   readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
- }
- 
- #output data from this app
- file_checked <- file.path(path_data, "macd_checked_60M.rds")
- 
- # function that writes data to rds file 
- storeData <- function(data, fileName) {
-   
-   # store store gathered unique records
-   # non duplicates
-   nonDuplicate <- data[!duplicated(data), ]
-   
-   # read existing file, if that exists...
-   if(file.exists(fileName)){
-     ex_data <- readr::read_rds(fileName)
-     # append...
-     agr_data <- dplyr::bind_rows(ex_data, nonDuplicate)
-     # Write the file to the local system
-     readr::write_rds(x = agr_data, file = fileName)
-     # write data first time...
-   } else {
-     # Write the file to the local system
-     readr::write_rds(x = nonDuplicate, file = fileName)
-   }
-   
-   
-   
- }
- 
-  
-  ####
-  
 
- macd_ai <- get_data()
-  #define reactive value to be number of rows in the dataset
-  n_rows <- reactiveValues(c = nrow(macd_ai))
+
+# path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+# path_data <- file.path(path_user, "_DATA")
+# 
+# #function to get data for this App to work
+# get_data <- function(){
+#   macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
+#   return(macd_ai)}
+# 
+# #function to write data
+# write_data <- function(x){
+#   readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
+# }
+# 
+# #output data from this app
+# file_checked <- file.path(path_data, "macd_checked_60M.rds")
+# 
+# # function that writes data to rds file 
+# storeData <- function(data, fileName) {
+#   
+#     nonDuplicate <- data[!duplicated(data), ]
+#   
+#     if(file.exists(fileName)){
+#          ex_data <- readr::read_rds(fileName)
+#          agr_data <- dplyr::bind_rows(ex_data, nonDuplicate)
+#          readr::write_rds(x = agr_data, file = fileName)
+#     } else {
+#     # Write the file to the local system
+#     readr::write_rds(x = nonDuplicate, file = fileName)
+#   }
+#}
+# 
+#  macd_ai <- get_data()
+#  n_rows <- reactiveValues(c = nrow(macd_ai))
+#  
+#  #get data on pressing the button
+#  observeEvent(input$BOOM, {
+#    n_rows$c <- nrow(macd_ai)
+#    updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1) 
+#  })
+#  
+#  #current market type value
+#  mt_analysed <- reactive({ mt_analysed <- macd_ai[input$rows, 65]})
+#  #current data row
+#  ln_analysed <- reactive({ ln_analysed <- macd_ai[input$rows, ]})
+#  
+#  #write data while pressing a button
+#  observeEvent(input$BUN, {
+#    #dataframe to add new market type
+#    df <- tibble::tibble(M_T = 'BUN')
+#    #new line of data to store
+#    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#    storeData(ln_new, file_checked)
+#    macd_ai <<- macd_ai[-input$rows, ]
+#    write_data(macd_ai)
+#  }) 
+#  
+#  #write data while pressing a button.
+#  observeEvent(input$BUV, {
+#        #dataframe to add new market type
+#        df <- tibble::tibble(M_T = 'BUV')
+#        #new line of data to store
+#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#        storeData(ln_new, file_checked)
+#        macd_ai <<- macd_ai[-input$rows, ]
+#        write_data(macd_ai)
+#  })
+#  
+#  #write data while pressing a button
+#  observeEvent(input$BUN, {
+#       #dataframe to add new market type
+#       df <- tibble::tibble(M_T = 'BEN')
+#       #new line of data to store
+#       ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#       storeData(ln_new, file_checked)
+#       macd_ai <<- macd_ai[-input$rows, ]
+#       write_data(macd_ai)
+#  })
+#  
+#  
+#  #write data while pressing a button
+#  observeEvent(input$BUV, {
+#       #dataframe to add new market type
+#       df <- tibble::tibble(M_T = 'BEV')
+#       #new line of data to store
+#       ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#       storeData(ln_new, file_checked)
+#       macd_ai <<- macd_ai[-input$rows, ]
+#       write_data(macd_ai)
+#  })
+#  #write data while pressing a button
+#  observeEvent(input$RAV, {
+#        #dataframe to add new market type
+#        df <- tibble::tibble(M_T = 'RAV')
+#        #new line of data to store
+#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#        storeData(ln_new, file_checked)
+#        macd_ai <<- macd_ai[-input$rows, ]
+#        write_data(macd_ai)
+#  })
+#  
+#  
+#  #write data while pressing a button
+#  observeEvent(input$RAN, {
+#        #dataframe to add new market type
+#        df <- tibble::tibble(M_T = 'RAN')
+#        #new line of data to store
+#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+#        storeData(ln_new, file_checked)
+#        macd_ai <<- macd_ai[-input$rows, ]
+#        write_data(macd_ai)
+#  })
+#  
+#  
+#  #graphs and outputs
+#  output$AI_Data <- renderPlot({
+#    
+#    # generate bins based on input$bins from ui.R
+#    
+#    plot(x = 1:64, y = macd_ai[input$rows, 1:64], main = mt_analysed())
+#    abline(h=0, col="blue")
+#    
+#    #plot(x = 1:64, y = macd_ai[3, 1:64])
+#    
+#    
+#  })
   
-  #get data on pressing the button
-  observeEvent(input$BOOM, {
-    n_rows$c <- nrow(macd_ai)
-    updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1) 
-  })
-  
-  #current market type value
-  mt_analysed <- reactive({ mt_analysed <- macd_ai[input$rows, 65]})
-  #current data row
-  ln_analysed <- reactive({ ln_analysed <- macd_ai[input$rows, ]})
-  
-  #write data while pressing a button
-  observeEvent(input$BUN, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'BUN')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  }) 
+ 
+  ###################################################################
+  ####################### - ANALYSE RESULT - ########################
+  ###################################################################
   
   
-  #write data while pressing a button.
-  observeEvent(input$BUV, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'BUV')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  })
-  
-  #write data while pressing a button
-  observeEvent(input$BUN, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'BEN')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  })
-  
-  
-  #write data while pressing a button
-  observeEvent(input$BUV, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'BEV')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  })
-  #write data while pressing a button
-  observeEvent(input$RAV, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'RAV')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  })
-  
-  
-  #write data while pressing a button
-  observeEvent(input$RAN, {
-    #dataframe to add new market type
-    df <- tibble::tibble(M_T = 'RAN')
-    #new line of data to store
-    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-    storeData(ln_new, file_checked)
-    macd_ai <<- macd_ai[-input$rows, ]
-    write_data(macd_ai)
-  })
-  
-  
-  #graphs and outputs
-  output$AI_Data <- renderPlot({
+  readResult <- reactive({
     
-    # generate bins based on input$bins from ui.R
-    #To Do create a Shiny APP to scroll through!
-    plot(x = 1:64, y = macd_ai[input$rows, 1:64], main = mt_analysed())
-    abline(h=0, col="blue")
-    
-    #plot(x = 1:64, y = macd_ai[3, 1:64])
-    
+    pathDSS <- normalizePath(Sys.getenv("PATH_DSS"), winslash = '/')
+    file_path <- paste0(pathDSS,"/_DATA/analyse_resultM60.csv")
+    DF_Result <- read.csv(file_path, col.names = c("TR_Level","NB_hold","Symbol","MaxPerf","FrstQntlPerf"))
+  })
+  
+  output$AnalyseResult <- renderTable({
+    readResult()
+  })
+  
+  dataResult <- reactive({
+    pathDSS <- normalizePath(Sys.getenv("PATH_DSS"), winslash = '/')
+    file_path <- paste0(pathDSS,"/_DATA/analyse_resultM60_data.csv")
+    DF_DataResult <- read.csv(file_path, col.names = c("PnL_NB","TotalTrades","TR_Level","NB_hold","Symbol","FinalOutCome"))
     
   })
   
-  
+  output$strategyTestResults <- renderPlot({
+    ggplot(dataResult(), aes(x = NB_hold, y = PnL_NB,
+                      #size = TotalTrades, 
+                      col = as.factor(Symbol)))+geom_point()+
+      ggtitle("Strategy Test results")
+  })
+   
+  output$modelPerformance <- renderPlot({
+    ggplot(readResult(), aes(x = MaxPerf, y = Symbol,
+                       col = TR_Level, 
+                       size = NB_hold))+geom_point()+
+                       geom_vline(xintercept=0.001)+ 
+                       scale_x_continuous()+
+                       ggtitle("Model Performance")
+  })
+
+  observeEvent(input$RefreshM60,{
+     
+      path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+      path_logs <- file.path(path_user, "_MODELS")
+      
+      # file names
+      filesToAnalyse <-list.files(path = path_logs,
+                                  pattern = "-60.rds",
+                                  full.names=TRUE)
+      
+      # aggregate all files into one
+      for (VAR in filesToAnalyse) {
+           # VAR <- filesToAnalyse[1]
+           if(!exists("dfres")){dfres <<- readr::read_rds(VAR)}  else {
+             dfres <<- readr::read_rds(VAR) %>% dplyr::bind_rows(dfres)
+           }
+     }
+      ## Analysis of model quality records
+      # file names
+      filesToAnalyse1 <-list.files(path = path_logs,
+                                   pattern = "M60.csv",
+                                   full.names=TRUE)
+      
+      # aggregate all files into one
+      for (VAR in filesToAnalyse1) {
+           # VAR <- filesToAnalyse1[1]
+           if(!exists("dfres1")){dfres1 <<- readr::read_csv(VAR)}  else {
+             dfres1 <<- readr::read_csv(VAR) %>% dplyr::bind_rows(dfres1)
+           }
+       }
+      
+      write.csv(dfres1,paste0(path_user,"/_DATA/analyse_resultM60.csv"), row.names=FALSE)
+      write.csv(dfres,paste0(path_user,"/_DATA/analyse_resultM60_data.csv"), row.names=FALSE)
+   
+   
     
+  })
+      
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
-      str(sellTrade())
-      print(sellTrade())
+     
+      print(readResult())
    
     })
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+
+
+
+#TO DO
+# Watchdog add AccountResultsT3
+# make the app online probably using VPS as host
+# golem
+
