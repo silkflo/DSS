@@ -62,7 +62,11 @@ ui <- fluidPage(
                                          column(3,textOutput("maxProfit")))),
                                                        column(width = 12, fluidRow(
                                          column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
-                                         column(3,textOutput("minProfit"))))
+                                         column(3,textOutput("minProfit")))), p(),p(),br(),
+                                                       column(width= 12, fluidRow(
+                                         column(3,strong("Account Results :", style = "text-decoration: underline;")),
+                                         column(9,tableOutput("watchDogReport"))
+                                                       ))
                                                       )))),
                 
                      
@@ -90,7 +94,7 @@ ui <- fluidPage(
             ))
         ),
         tabPanel(
-          "LOG RESULT", sidebarLayout(
+          "MODEL INSPECTION", sidebarLayout(
             sidebarPanel(actionButton(inputId = "RefreshM60", label = "Refresh")),
             mainPanel(tabsetPanel(type = "pills",
                                   tabPanel("Result",tableOutput("AnalyseResult")),
@@ -114,7 +118,9 @@ server <- function(input, output, session) {
    })
 #-----------------------------------------
     DF_Stats <- reactive({ 
-       DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
+       
+      if(file.exists(file_path())){
+      DF_Stats <- read.csv(file_path(), col.names = c("MagicNumber","Ticket","EntryTime","ExitTime","Profit","Symbol","Type"))
    
               DF_Stats <- data.frame(MagicNumber = DF_Stats$MagicNumber,
                             Ticket = DF_Stats$Ticket,
@@ -123,18 +129,25 @@ server <- function(input, output, session) {
                             Profit = DF_Stats$Profit,
                             Symbol = DF_Stats$Symbol,
                             Type = DF_Stats$Type)
+      }else{"NO DATA"}
     })
 #---------------------------------------      
     magicNumber <- reactive({
-      unique(DF_Stats()$MagicNumber)
+         if(file.exists(file_path())){
+              unique(DF_Stats()$MagicNumber)
+         }else{"NO DATA"}
     })
 #---------------------------------------    
     symbol <- reactive({
-       unique(DF_Stats()$Symbol)
+        if(file.exists(file_path())){  
+           unique(DF_Stats()$Symbol)
+        }else{"NO DATA"}
     })
 #---------------------------------------
    pair <- reactive({
-      as.vector(unique(DF_Balance()$Symbol))
+     if(file.exists(file_path())){    
+        as.vector(unique(DF_Balance()$Symbol))
+     }else{"NO DATA"}
     })
     
     
@@ -185,7 +198,8 @@ server <- function(input, output, session) {
     })
     
    output$data <- renderTable({
-     Stats <-  data.frame(MagicNumber = Stats()$MagicNumber,
+    if(file.exists(file_path())) {
+        Stats <-  data.frame(MagicNumber = Stats()$MagicNumber,
                           Ticket = Stats()$Ticket,
                           EntryTime = as.character(Stats()$EntryTime),
                           ExitTime = as.character(Stats()$ExitTime),
@@ -201,6 +215,7 @@ server <- function(input, output, session) {
            "ExitTime" =  Stats[order(Stats$ExitTime,decreasing = T),],
            "Profit"=  Stats[order(Stats$Profit,decreasing = T),],
            "Symbol"=  Stats[order(Stats$Symbol,decreasing = T),])
+    }else{"NO DATA"}
    })
     
    
@@ -252,7 +267,7 @@ server <- function(input, output, session) {
    
    
     output$balance <- renderTable({
-      if(nrow(Stats())>0){
+      if(file.exists(file_path())){
        
         if(input$MagicNum != "All"){
          DF_Balance <- data.frame(ExitTime = as.character(DF_Balance()$ExitTime),
@@ -274,7 +289,7 @@ server <- function(input, output, session) {
    
 #----------GRAPH TAB-----------------
   output$profitGraph <- renderPlotly({
-    if(nrow(Stats())>0){
+    if(file.exists(file_path())){
 
       color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
       colorList <- vector("list",length(pair()))
@@ -315,7 +330,7 @@ server <- function(input, output, session) {
   
   output$balanceGraph <- renderPlotly({
   
-    if(nrow(Stats())>0){
+    if(file.exists(file_path())){
       color <- c("red", "black", "blue","green","orange","purple", "pink","cornflowerblue", "darkgreen","indianred3","magenta","mediumpurple3", "midnightblue","orchid4","palegreen","skyblue","slateblue4", "tomato1")
       colorList <- vector("list",length(pair()))
       
@@ -451,7 +466,7 @@ server <- function(input, output, session) {
  
   output$result <- renderTable({
     
-    if(nrow(Stats()>0)){
+    if(file.exists(file_path())){
          DF_allPair <- DF_Balance_All()
          allPair <- round(DF_allPair[nrow(DF_allPair),4],2)
          final_Balance  <- vector("numeric", length(pair()))
@@ -488,7 +503,7 @@ server <- function(input, output, session) {
   })
  
   output$profitFactor <- renderText({
-      if(nrow(Stats()>0)){
+    if(file.exists(file_path())){
             negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%sum()
             posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%sum()
             round(abs(posProfit/negProfit),2)
@@ -498,20 +513,41 @@ server <- function(input, output, session) {
   })
     
   output$maxProfit <- renderText({
-    if(nrow(Stats())>0){max(Stats()$Profit)}
+    if(file.exists(file_path())){max(Stats()$Profit)}
     else{"NO DATA"}
   })
   
   output$minProfit <- renderText({
-      if(nrow(Stats())>0){min(Stats()$Profit)}
+    if(file.exists(file_path())){min(Stats()$Profit)}
       else{"NO DATA"}
   })
   
   output$totalTrade <- renderText({
-    nrow(Stats())
+    if(file.exists(file_path())){
+    nrow(Stats())}
+    else{"NO DATA"}
   })
  
-  #max consecutive win/loss
+  accountResults <- reactive({
+    pathDSS <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+    path_AR <- paste0(pathDSS,"/_DATA/AccountResultsT",input$Terminal,".rds")
+    
+    if(file.exists(path_AR)){
+     df_AR <- readr::read_rds(path_AR)
+     
+     df_AR <-  data.frame(DateTime =as.character(df_AR$DateTime),
+                          Balance = df_AR$Balance,
+                          Equity = df_AR$Equity,
+                          Profit = df_AR$Profit
+                          )
+     
+    } else{"NO DATA"}
+    
+  })
+  
+  output$watchDogReport <- renderTable({
+    accountResults()
+  }) 
 
   
 ###################################################################
@@ -726,7 +762,7 @@ server <- function(input, output, session) {
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
      
-      print(readResult())
+      print(accountResults())
    
     })
 }
