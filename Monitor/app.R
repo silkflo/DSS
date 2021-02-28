@@ -15,6 +15,11 @@ library(rsconnect)
 library(h2o)
 #rsconnect::deployApp('C:/DSS/Monitor/')
 
+path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+path_data <- file.path(path_user, "_DATA")
+macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
+
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
     navbarPage("EA MANAGEMENT",
@@ -74,24 +79,23 @@ ui <- fluidPage(
         tabPanel(
           "MT INSPECTION",sidebarLayout(
             sidebarPanel(
-           #   sliderInput("rows",
-           #               "Number of rows:",
-           #               min = 1,
-           #               max = nrow(macd_ai),
-           #               value = 1,
-           #               step = 1),
-           #   actionButton(inputId = "BUN", label = "BUN"),
-           #   actionButton(inputId = "BUV", label = "BUV"),
-           #   actionButton(inputId = "BEN", label = "BEN"),
-           #   actionButton(inputId = "BEV", label = "BEV"),
-           #   actionButton(inputId = "RAN", label = "RAN"),
-           #   actionButton(inputId = "RAV", label = "RAV"),
-           #  actionButton(inputId ="BOOM", label = 'boom')
+              sliderInput("rows",
+                          "Number of rows:",
+                          min = 1,
+                          max = nrow(macd_ai),
+                          value = 1,
+                          step = 1),
+              actionButton(inputId = "BUN", label = "BUN"),
+              actionButton(inputId = "BUV", label = "BUV"),
+              actionButton(inputId = "BEN", label = "BEN"),
+              actionButton(inputId = "BEV", label = "BEV"),
+              actionButton(inputId = "RAN", label = "RAN"),
+              actionButton(inputId = "RAV", label = "RAV"),
+             actionButton(inputId ="BOOM", label = 'BOOM')
             ),
             mainPanel(
-             # plotOutput("AI_Data")
-              p("In construction")
-            ))
+              plotOutput("AI_Data")
+           ))
         ),
         tabPanel(
           "MODEL INSPECTION", sidebarLayout(
@@ -555,135 +559,141 @@ server <- function(input, output, session) {
 ###################################################################
 
 
-# path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
-# path_data <- file.path(path_user, "_DATA")
-# 
-# #function to get data for this App to work
-# get_data <- function(){
-#   macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
-#   return(macd_ai)}
-# 
-# #function to write data
-# write_data <- function(x){
-#   readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
-# }
-# 
-# #output data from this app
-# file_checked <- file.path(path_data, "macd_checked_60M.rds")
-# 
-# # function that writes data to rds file 
-# storeData <- function(data, fileName) {
-#   
-#     nonDuplicate <- data[!duplicated(data), ]
-#   
-#     if(file.exists(fileName)){
-#          ex_data <- readr::read_rds(fileName)
-#          agr_data <- dplyr::bind_rows(ex_data, nonDuplicate)
-#          readr::write_rds(x = agr_data, file = fileName)
-#     } else {
-#     # Write the file to the local system
-#     readr::write_rds(x = nonDuplicate, file = fileName)
-#   }
-#}
-# 
-#  macd_ai <- get_data()
-#  n_rows <- reactiveValues(c = nrow(macd_ai))
-#  
-#  #get data on pressing the button
-#  observeEvent(input$BOOM, {
-#    n_rows$c <- nrow(macd_ai)
-#    updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1) 
-#  })
-#  
-#  #current market type value
-#  mt_analysed <- reactive({ mt_analysed <- macd_ai[input$rows, 65]})
-#  #current data row
-#  ln_analysed <- reactive({ ln_analysed <- macd_ai[input$rows, ]})
-#  
-#  #write data while pressing a button
-#  observeEvent(input$BUN, {
-#    #dataframe to add new market type
-#    df <- tibble::tibble(M_T = 'BUN')
-#    #new line of data to store
-#    ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#    storeData(ln_new, file_checked)
-#    macd_ai <<- macd_ai[-input$rows, ]
-#    write_data(macd_ai)
-#  }) 
-#  
-#  #write data while pressing a button.
-#  observeEvent(input$BUV, {
-#        #dataframe to add new market type
-#        df <- tibble::tibble(M_T = 'BUV')
-#        #new line of data to store
-#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#        storeData(ln_new, file_checked)
-#        macd_ai <<- macd_ai[-input$rows, ]
-#        write_data(macd_ai)
-#  })
-#  
-#  #write data while pressing a button
-#  observeEvent(input$BUN, {
-#       #dataframe to add new market type
-#       df <- tibble::tibble(M_T = 'BEN')
-#       #new line of data to store
-#       ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#       storeData(ln_new, file_checked)
-#       macd_ai <<- macd_ai[-input$rows, ]
-#       write_data(macd_ai)
-#  })
-#  
-#  
-#  #write data while pressing a button
-#  observeEvent(input$BUV, {
-#       #dataframe to add new market type
-#       df <- tibble::tibble(M_T = 'BEV')
-#       #new line of data to store
-#       ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#       storeData(ln_new, file_checked)
-#       macd_ai <<- macd_ai[-input$rows, ]
-#       write_data(macd_ai)
-#  })
-#  #write data while pressing a button
-#  observeEvent(input$RAV, {
-#        #dataframe to add new market type
-#        df <- tibble::tibble(M_T = 'RAV')
-#        #new line of data to store
-#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#        storeData(ln_new, file_checked)
-#        macd_ai <<- macd_ai[-input$rows, ]
-#        write_data(macd_ai)
-#  })
-#  
-#  
-#  #write data while pressing a button
-#  observeEvent(input$RAN, {
-#        #dataframe to add new market type
-#        df <- tibble::tibble(M_T = 'RAN')
-#        #new line of data to store
-#        ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
-#        storeData(ln_new, file_checked)
-#        macd_ai <<- macd_ai[-input$rows, ]
-#        write_data(macd_ai)
-#  })
-#  
-#  
-#  #graphs and outputs
-#  output$AI_Data <- renderPlot({
-#    
-#    # generate bins based on input$bins from ui.R
-#    
-#    plot(x = 1:64, y = macd_ai[input$rows, 1:64], main = mt_analysed())
-#    abline(h=0, col="blue")
-#    
-#    #plot(x = 1:64, y = macd_ai[3, 1:64])
-#    
-#    
-#  })
+macd_ai <- reactive({
+   path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+   path_data <- file.path(path_user, "_DATA")
+   readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
+})  
+   
+   n_rows <- reactiveValues(c = nrow(macd_ai))
+
+    #update slider max
+    observeEvent(input$BOOM, {
+      path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+      path_data <- file.path(path_user, "_DATA")
+      macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds')) 
+      n_rows$c <- nrow(macd_ai)
+      updateSliderInput(session, inputId = "rows",min = 1, max = n_rows$c,value = 1)
+    })
+    
+    #current market type value
+      mt_analysed <- reactive({ mt_analysed <- macd_ai()[input$rows, 65]})
+      #current data row
+      ln_analysed <- reactive({ ln_analysed <- macd_ai()[input$rows, ]})
+
+      
+      #function to write data
+      write_data <- function(x){
+        readr::write_rds(x, file.path(path_data, 'macd_ai_classified.rds'))
+      }
+      
+      #output data from this app
+      file_checked <- file.path(path_data, "macd_checked_60M.rds")
+      
+      # function that writes data to rds file 
+      storeData <- function(data, fileName) {
+        
+        nonDuplicate <- data[!duplicated(data), ]
+        
+        if(file.exists(fileName)){
+             ex_data <- readr::read_rds(fileName)
+             agr_data <- dplyr::bind_rows(ex_data, nonDuplicate)
+             readr::write_rds(x = agr_data, file = fileName)
+        }else{
+             # Write the file to the local system
+             readr::write_rds(x = nonDuplicate, file = fileName)
+           }
+      }
+      
+      observeEvent(input$BUN, {
+            
+            path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+            path_data <- file.path(path_user, "_DATA")
+            macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))   
+            df <- tibble::tibble(M_T = 'BUN')
+            ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+            storeData(ln_new, file_checked)
+            macd_ai <<- macd_ai[-input$rows, ]
+            write_data(macd_ai)
+          })     
+     
+      observeEvent(input$BUV, {
+            
+            path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+            path_data <- file.path(path_user, "_DATA")
+            macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds')) 
+            df <- tibble::tibble(M_T = 'BUV')
+            ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+            storeData(ln_new, file_checked)
+            macd_ai <<- macd_ai[-input$rows, ]
+            write_data(macd_ai)
+      })
+      
+      observeEvent(input$BEN, {
+          
+          path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+          path_data <- file.path(path_user, "_DATA")
+          macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))   
+           df <- tibble::tibble(M_T = 'BEN')
+           ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+           storeData(ln_new, file_checked)
+           macd_ai <<- macd_ai[-input$rows, ]
+           write_data(macd_ai)
+      })
+      
+      observeEvent(input$BEV, {
+           
+          path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+          path_data <- file.path(path_user, "_DATA")
+          macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds')) 
+          df <- tibble::tibble(M_T = 'BEV')
+           ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+           storeData(ln_new, file_checked)
+           macd_ai <<- macd_ai[-input$rows, ]
+           write_data(macd_ai)
+      })
+     
+       observeEvent(input$RAV, {
+            
+           path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+           path_data <- file.path(path_user, "_DATA")
+           macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))   
+           df <- tibble::tibble(M_T = 'RAV')
+            ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+            storeData(ln_new, file_checked)
+            macd_ai <<- macd_ai[-input$rows, ]
+            write_data(macd_ai)
+      })
+      
+      observeEvent(input$RAN, {
+            
+            path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+            path_data <- file.path(path_user, "_DATA")
+            macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds')) 
+            df <- tibble::tibble(M_T = 'RAN')
+            ln_new <- dplyr::bind_cols(macd_ai[input$rows, 1:64], df)
+            storeData(ln_new, file_checked)
+            macd_ai <<- macd_ai[-input$rows, ]
+            write_data(macd_ai)
+      })
+     
+  
+  #graphs and outputs
+ output$AI_Data <- renderPlot({
+   
+   # generate bins based on input$bins from ui.R
+   
+   plot(x = 1:64, y = macd_ai()[input$rows, 1:64], main = mt_analysed())
+   abline(h=0, col="blue")
+   
+   #plot(x = 1:64, y = macd_ai[3, 1:64])
+    
+    
+  })
   
  
   ###################################################################
-  ####################### - ANALYSE RESULT - ########################
+  ####################### - MODEL INSPECTION - ######################
   ###################################################################
   
   
@@ -762,8 +772,10 @@ server <- function(input, output, session) {
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
      
-      print(accountResults())
-   
+      print(mt_analysed())
+      
+      print(ln_analysed())
+        
     })
 }
 
