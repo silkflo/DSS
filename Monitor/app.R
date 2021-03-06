@@ -53,7 +53,9 @@ ui <- fluidPage(
                                                 tabPanel("Balance", plotlyOutput("balanceGraph")))),
                                      tabPanel("Account",
                                               tabsetPanel(
-                                              tabPanel("Result",tableOutput("watchDogReport")),
+                                              tabPanel("Result",em("Click Refresh to update the data"),
+                                                       br(),
+                                                       tableOutput("watchDogReport")),
                                               tabPanel("Graph",plotlyOutput("equityGraph")))),
                                             
                                      tabPanel( 
