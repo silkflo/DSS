@@ -21,3 +21,10 @@ ROBOCOPY %SOURCE_DIR% %DEST_DIR2% *OrdersResultsT2.csv
 ROBOCOPY %SOURCE_DIR% %DEST_DIR3% *OrdersResultsT3.csv
 ROBOCOPY %SOURCE_DIR% %DEST_DIR4% *OrdersResultsT4.csv
 ::ROBOCOPY %SOURCE_DIR% %DEST_DIR% *OrdersResultsT5.csv
+
+:: Copy only files with *.csv extension
+ROBOCOPY %SOURCE_DIR% %DEST_DIR1% *AccountResultsT1.csv
+ROBOCOPY %SOURCE_DIR% %DEST_DIR2% *AccountResultsT2.csv
+ROBOCOPY %SOURCE_DIR% %DEST_DIR3% *AccountResultsT3.csv
+ROBOCOPY %SOURCE_DIR% %DEST_DIR4% *AccountResultsT4.csv
+::ROBOCOPY %SOURCE_DIR% %DEST_DIR% *AccountResultsT5.csv
