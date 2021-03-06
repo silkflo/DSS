@@ -51,6 +51,11 @@ ui <- fluidPage(
                                               tabsetPanel(
                                                tabPanel("Profit",plotlyOutput("profitGraph")),
                                                 tabPanel("Balance", plotlyOutput("balanceGraph")))),
+                                     tabPanel("Account",
+                                              tabsetPanel(
+                                              tabPanel("Result",tableOutput("watchDogReport")),
+                                              tabPanel("Graph",plotlyOutput("equityGraph")))),
+                                            
                                      tabPanel( 
                                        "Report",br(),
                                                        
@@ -67,15 +72,7 @@ ui <- fluidPage(
                                          column(3,textOutput("maxProfit")))),
                                                        column(width = 12, fluidRow(
                                          column(3,strong("Minimum Profit :", style = "text-decoration: underline;")),
-                                         column(3,textOutput("minProfit")))), p(),p(),br(),
-                                                       column(width= 12, fluidRow(
-                                         column(3,strong("Account Results :", style = "text-decoration: underline;")),
-                                         column(9,tableOutput("watchDogReport"))
-                                                       ))
-                                                      )))),
-                
-                     
-                   ),
+                                         column(3,textOutput("minProfit")))), p(),p(),br()))))),
         tabPanel(
           "MT INSPECTION",sidebarLayout(
             sidebarPanel(
@@ -508,9 +505,13 @@ server <- function(input, output, session) {
  
   output$profitFactor <- renderText({
     if(file.exists(file_path())){
-            negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%sum()
-            posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%sum()
-            round(abs(posProfit/negProfit),2)
+            negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%summarise(Loss = abs(sum(Profit)))
+            posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%summarise(Gain = abs(sum(Profit)))
+            
+            
+            if(negProfit == 0 ){"Only Gain"}
+            else if (posProfit == 0){"Only Loss"}
+            else{as.double(round( posProfit/(0.001+negProfit),2))}
       }else{
             "NO DATA"
       }
@@ -532,27 +533,68 @@ server <- function(input, output, session) {
     else{"NO DATA"}
   })
  
-  accountResults <- reactive({
-    pathDSS <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
-    path_AR <- paste0(pathDSS,"/_DATA/AccountResultsT",input$Terminal,".rds")
+  account_path <- reactive({
     
-    if(file.exists(path_AR)){
-     df_AR <- readr::read_rds(path_AR)
+    #  Terminals <- normalizePath(Sys.getenv('PATH_T1'), winslash = '/')
+    #  file_path <- paste0(Terminals,"/OrdersResultsT",1,".csv")      
+    pathDSS <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+    paste0(pathDSS,"/_DATA/AccountResultsT",input$Terminal,".rds")
+  })
+  
+  
+  accountResults <- reactive({
+
+    
+    if(file.exists(account_path())){
+     df_AR <- readr::read_rds(account_path())
      
-     df_AR <-  data.frame(DateTime =as.character(df_AR$DateTime),
+     df_AR <-  data.frame(DateTime =df_AR$DateTime,
                           Balance = df_AR$Balance,
                           Equity = df_AR$Equity,
                           Profit = df_AR$Profit
                           )
-     
+     df_AR <- df_AR%>%filter(DateTime >= input$From, DateTime <= paste0(input$To," 23:59:59"))
     } else{"NO DATA"}
-    
   })
   
   output$watchDogReport <- renderTable({
-    accountResults()
+    df_AR <-  data.frame(DateTime =as.character(accountResults()$DateTime),
+                         Balance = accountResults()$Balance,
+                         Equity = accountResults()$Equity,
+                         Profit = accountResults()$Profit
+    )
   }) 
 
+ output$equityGraph <- renderPlotly({
+   
+   if(file.exists(account_path())){
+
+     
+     graph <-  plot_ly(
+       type = 'scatter',
+       x = accountResults()$DateTime,
+       y = accountResults()$Balance,
+       text = paste("<br>Time: ", accountResults()$DateTime,
+                    "<br>Balance: ", accountResults()$Balance),
+       hoverinfo = 'text',
+       mode = 'lines',
+       name = 'Balance',
+       line = list(color = 'blue'))
+     
+     graph <- graph %>% add_trace(
+       type = 'scatter',
+       x = accountResults()$DateTime,
+       y = accountResults()$Equity,
+       text = paste("<br>Time: ", accountResults()$DateTime,
+                    "<br>Equity: ", accountResults()$Equity),
+       hoverinfo = 'text',
+       mode = 'lines',
+       name = 'Equity',
+       line = list(color = 'red')
+     )
+   }
+ }) 
+  
   
 ###################################################################
 ####################### - MT INSPECTION - #########################
@@ -577,7 +619,14 @@ macd_ai <- reactive({
     })
     
     #current market type value
-      mt_analysed <- reactive({ mt_analysed <- macd_ai()[input$rows, 65]})
+      mt_analysed <- reactive({
+        
+              path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+              path_data <- file.path(path_user, "_DATA")
+              macd_ai <- readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
+              
+        mt_analysed <- macd_ai[input$rows, 65]
+        })
       #current data row
       ln_analysed <- reactive({ ln_analysed <- macd_ai()[input$rows, ]})
 
@@ -682,8 +731,12 @@ macd_ai <- reactive({
  output$AI_Data <- renderPlot({
    
    # generate bins based on input$bins from ui.R
+   path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+   path_data <- file.path(path_user, "_DATA")
+   macd_ai <-readr::read_rds(file.path(path_data, 'macd_ai_classified.rds'))
    
-   plot(x = 1:64, y = macd_ai()[input$rows, 1:64], main = mt_analysed())
+   
+   plot(x = 1:64, y = macd_ai[input$rows, 1:64], main = mt_analysed())
    abline(h=0, col="blue")
    
    #plot(x = 1:64, y = macd_ai[3, 1:64])
@@ -771,14 +824,16 @@ macd_ai <- reactive({
       
 #---------------END CODE------------------------------------------
     output$console <- renderPrint({
-     
-      print(mt_analysed())
+      negProfit <- Stats()%>%filter(Profit<0)%>%select(Profit)%>%summarise(Loss = abs(sum(Profit)))
+      posProfit <- Stats()%>%filter(Profit>0)%>%select(Profit)%>%summarise(Gain = abs(sum(Profit)))
       
-      print(ln_analysed())
-        
-    })
-}
+      PF <- posProfit/(0.001+negProfit)
+      print(paste0(posProfit,"/",negProfit, " = ", PF))
+  
+ })
 
+  
+}
 # Run the application 
 shinyApp(ui = ui, server = server)
 
