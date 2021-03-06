@@ -159,7 +159,53 @@ server <- function(input, output, session) {
     observeEvent(input$Refresh,{
         updateSelectInput(session, inputId = "MagicNum", label = NULL, choices = c("All",magicNumber()), selected = NULL)
         updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
-    })
+   
+        path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
+        
+    
+        
+        Terminals <- normalizePath(Sys.getenv(paste0('PATH_T',input$Terminal)), winslash = '/')
+        
+        acc_file_T1 <- file.path(path_user, "_DATA/AccountResultsT1.rds")
+        acc_file_T3 <- file.path(path_user, "_DATA/AccountResultsT3.rds")
+        
+      
+        if(input$Terminal == 1 ){
+        DFT1Act <- read_csv(file.path(Terminals, 'AccountResultsT1.csv'),
+                            col_names = c("DateTime", "Balance", "Equity","Profit"),
+                            col_types = "cddd")
+           DFT1Act$DateTime <- ymd_hms(DFT1Act$DateTime)
+           if (!file.exists(acc_file_T1)) {
+             write_rds(DFT1Act, acc_file_T1)
+           } else {
+             read_rds(acc_file_T1) %>% 
+               bind_rows(DFT1Act) %>% 
+               arrange(DateTime) %>% 
+               head(1000) %>% 
+               write_rds(acc_file_T1)
+           }
+        }
+        if(input$Terminal == 3 ){
+             DFT3Act <- read_csv(file.path(Terminals, 'AccountResultsT3.csv'),
+                                 col_names = c("DateTime", "Balance", "Equity","Profit"),
+                                 col_types = "cddd")
+             DFT3Act$DateTime <- ymd_hms(DFT3Act$DateTime)
+             
+                 if (!file.exists(acc_file_T3)) {
+                        write_rds(DFT3Act, acc_file_T3)
+                      }else {
+                         read_rds(acc_file_T3) %>% 
+                          bind_rows(DFT3Act) %>% 
+                          arrange(DateTime) %>% 
+                          head(1000) %>% 
+                          write_rds(acc_file_T3)
+                      }    
+        }
+   
+        
+     })
+   
+   
     observeEvent(input$Terminal,{
       updateSelectInput(session, inputId = "MagicNum", label = NULL, choices = c("All",magicNumber()), selected = NULL)
       updateSelectInput(session, inputId = "Symbol", label = NULL, choices = c("All",symbol()), selected = NULL)
@@ -558,11 +604,12 @@ server <- function(input, output, session) {
   })
   
   output$watchDogReport <- renderTable({
-    df_AR <-  data.frame(DateTime =as.character(accountResults()$DateTime),
+   if(file.exists(account_path())){
+     df_AR <-  data.frame(DateTime =as.character(accountResults()$DateTime),
                          Balance = accountResults()$Balance,
                          Equity = accountResults()$Equity,
-                         Profit = accountResults()$Profit
-    )
+                         Profit = accountResults()$Profit)
+   }else{"NO DATA"}
   }) 
 
  output$equityGraph <- renderPlotly({
