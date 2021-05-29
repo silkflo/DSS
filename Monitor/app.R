@@ -20,7 +20,7 @@ jsResetCode <- "shinyjs.reset = function() {history.go(0)}"
 #rsconnect::deployApp('C:/DSS/Monitor/')
 
 path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
-path_data <- file.path(path_user, "_DATA")
+path_data <- file.path(path_user, "_DATA/6_06")
 macd_ai <- readr::read_rds(file.path(path_data, paste0('AI_RSIADXEURUSD60.rds')))
 
 
@@ -111,8 +111,8 @@ ui <- fluidPage(
                      column(6, selectInput(inputId = "MagicNumMT", label = "Select Magic Number", choices = 1:10)),
                      column(6, selectInput(inputId = "SymbolMT", label = "Select the symbol",choices = 1:10)))),
                    column(width = 12,fluidRow(
-                     column(6,dateInput(inputId = "FromMT", label = "From", value = Sys.Date()-7)),
-                     column(6,dateInput(inputId = "ToMT", label = "To", value = Sys.Date())))),
+                     column(6,dateInput(inputId = "FromMT", label = "From", value = Sys.Date()-7))
+                     )),
                    
                    # selectInput(inputId = "SymbolMT", label = "Select the symbol",choices = c("AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","CADCHF","CADJPY","CHFJPY","EURAUD","EURCAD","EURCHF","EURGBP","EURJPY","EURNZD","EURUSD","GBPAUD","GBPCAD","GBPCHF","GBPJPY","GBPNZD","GBPUSD","NZDCAD","NZDCHF","NZDJPY","NZDUSD","USDCAD","USDCHF","USDJPY")),
                    sliderInput("rows",
@@ -132,6 +132,7 @@ ui <- fluidPage(
                                          plotlyOutput("closePrice"),
                                          DT::dataTableOutput("closePriceTable")),
                                tabPanel("Stats",
+                                        plotlyOutput("MTResult"),
                                         plotlyOutput("controlGraph"))
                  ))
              )),
@@ -802,9 +803,12 @@ server <- function(input, output, session) {
     }
     
     MarketTypeLog <- data.table::rbindlist(MTList)
-
-     
     
+    MarketTypeLog <- merge(x = MarketTypeLog,y = DF_Stats(),by = "Ticket", All.x= TRUE)
+    
+    
+    
+
   })
 
 #
@@ -812,7 +816,7 @@ server <- function(input, output, session) {
   
     if(input$SymbolMT != "character(0)"){
       path_user <- normalizePath(Sys.getenv('PATH_DSS'), winslash = '/')
-      path_data <- file.path(path_user, "_DATA")
+      path_data <- file.path(path_user, "_DATA/6_06")
      Ai_Rsiadx <-readr::read_rds(file.path(path_data,  paste0('AI_RSIADX',input$SymbolMT,'60.rds')))
     
   
@@ -934,6 +938,40 @@ server <- function(input, output, session) {
            
            
  })
+  
+  
+  output$MTResult <- renderPlotly({
+    
+    if(input$MagicNumMT == "All"){
+      
+      MarketTypeLog <- MarketTypeLog() %>% filter(MarketTypeLog()$EntryTime >= input$FromMT)
+       if(nrow(MarketTypeLog)>0){
+      MarketTypeResult <- aggregate(MarketTypeLog$Profit, by=list(MarketType=MarketTypeLog$MarketType), FUN=sum)
+      
+              hist <- plot_ly(
+              x = MarketTypeResult$MarketType,
+              y = MarketTypeResult$x,
+              name = "MT Result",
+              type = "bar")
+             }
+    }else{
+    
+    MarketTypeLog <- MarketTypeLog() %>% filter(MarketTypeLog()$MagicNumber.x == input$MagicNumMT , MarketTypeLog()$EntryTime >= input$FromMT)
+    
+      if(nrow(MarketTypeLog>0)){
+        MarketTypeResult <- aggregate(MarketTypeLog$Profit, by=list(MarketType=MarketTypeLog$MarketType), FUN=sum)
+    
+    
+            hist <- plot_ly(
+              x = MarketTypeResult$MarketType,
+              y = MarketTypeResult$x,
+              name = "MT Result",
+              type = "bar")
+      }
+    }
+    
+  })
+  
   
 
   ###################################################################
@@ -1102,7 +1140,7 @@ server <- function(input, output, session) {
   #---------------END CODE------------------------------------------
   output$console <- renderPrint({
     
-  print(input$From + 1)
+  print(MarketTypeLog())
   })
   
   
